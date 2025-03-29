@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <title>Registrácia ŠPZ – Pešia zóna BB</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+  <h2 class="mb-4">Prihlásenie</h2>
+  <form id="login-form">
+    <div class="mb-3">
+      <label for="email" class="form-label">Email</label>
+      <input type="email" class="form-control" id="email" required>
+    </div>
+    <div class="mb-3">
+      <label for="password" class="form-label">Heslo</label>
+      <input type="password" class="form-control" id="password" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Prihlásiť sa</button>
+  </form>
+
+  <div id="app" style="display:none;">
+    <hr>
+    <h4>Vaše vozidlá</h4>
+    <ul id="vehicle-list" class="list-group mb-3"></ul>
+
+    <form id="add-vehicle-form">
+      <div class="input-group">
+        <input type="text" class="form-control" id="spz" placeholder="Zadajte ŠPZ" required>
+        <button class="btn btn-success" type="submit">Pridať</button>
+      </div>
+    </form>
+
+    <div id="permission-info" class="mt-4"></div>
+
+    <div id="admin-panel" class="mt-5" style="display:none;">
+      <hr>
+      <h4>Admin rozhranie – nastavenie povolení</h4>
+
+      <div class="mb-3">
+        <label class="form-label">Zoznam používateľov</label>
+        <input type="text" class="form-control mb-2" id="search-users" placeholder="Vyhľadať podľa emailu...">
+        <ul id="user-list" class="list-group"></ul>
+      </div>
+      <form id="set-permission-form" class="mt-4">
+        <input type="hidden" id="target-user-id">
+        <div class="mb-2">
+          <input type="number" class="form-control" id="daily-entries" placeholder="Počet vstupov denne" required>
+        </div>
+        <div class="mb-2">
+          <input type="text" class="form-control" id="time-window" placeholder="Časové okno (napr. 04:00 - 09:00)" required>
+        </div>
+        <button type="submit" class="btn btn-warning">Nastaviť povolenie</button>
+        <button id="export-btn" class="btn btn-outline-primary mt-3">⬇️ Export CSV</button>
+
+      </form>
+
+      <div id="admin-vehicle-list" class="mt-4"></div>
+
+      <form id="admin-add-vehicle-form" class="mt-3" style="display:none">
+        <div class="input-group">
+          <input type="text" class="form-control" id="admin-new-spz" placeholder="Zadaj novú ŠPZ pre používateľa">
+          <button class="btn btn-success" type="submit">Pridať ŠPZ</button>
+        </div>
+      </form>
+    </div>
+
+    <button id="logout" class="btn btn-secondary mt-3">Odhlásiť sa</button>
+  </div>
+</div>
+<script>
+  const form = document.getElementById('login-form');
+  const tokenKey = 'access_token';
+  const API_BASE = "http://localhost:8000";
+  let selectedUserElement = null;
+  
+  // Prihlásenie
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const res = await fetch(API_BASE + '/token', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({username: email, password: password})
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem(tokenKey, data.access_token);
+      document.getElementById('login-form').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      loadVehicles();
+      loadPermission();
+      checkAdmin();
+    } else {
+      alert('Nesprávny email alebo heslo');
+    }
+  });
+  
+  // Načítanie vozidiel používateľa
+  async function loadVehicles() {
+    const res = await fetch(API_BASE + '/vehicles', {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+    });
+    const vehicles = await res.json();
+    const list = document.getElementById('vehicle-list');
+    list.innerHTML = '';
+    vehicles.forEach(v => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.textContent = v.spz;
+      list.appendChild(li);
+    });
+  }
+  
+  // Načítanie povolení pre používateľa
+  async function loadPermission() {
+    const res = await fetch(API_BASE + '/permissions', {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+    });
+    if (res.ok) {
+      const perm = await res.json();
+      document.getElementById('permission-info').innerHTML = `
+        <div class="alert alert-info">
+          Povolené vstupy denne: <strong>${perm.daily_entries}</strong><br>
+          Časové okno: <strong>${perm.time_window}</strong>
+        </div>`;
+    }
+  }
+  
+  // Zistí, či je používateľ admin
+  async function checkAdmin() {
+    const res = await fetch(API_BASE + '/me', {
+      headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+    });
+    const user = await res.json();
+    if (user.is_admin) {
+      document.getElementById('admin-panel').style.display = 'block';
+      loadUserList();
+    }
+  }
+// Debounce funkcia pre vyhľadávanie
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+}
+
+const debouncedLoadUserList = debounce(() => {
+  loadUserList(document.getElementById('search-users').value);
+}, 300);
+
+document.getElementById('search-users').addEventListener('input', debouncedLoadUserList);
+
+// Načítanie zoznamu používateľov
+async function loadUserList(filter = "") {
+  const res = await fetch(API_BASE + '/admin/users', {
+    headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+  });
+  const users = await res.json();
+  const list = document.getElementById('user-list');
+  list.innerHTML = '';
+  for (const u of users) {
+    if (!u.email.toLowerCase().includes(filter.toLowerCase())) continue;
+    let permInfo = '';
+    try {
+      const p = await fetch(`${API_BASE}/admin/permissions/${u.id}`, {
+        headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+      });
+      if (p.ok) {
+        const pdata = await p.json();
+        permInfo = `<br><small class="text-success">${pdata.daily_entries} vstupov • ${pdata.time_window}</small>`;
+      }
+    } catch {}
+    const li = document.createElement('li');
+    li.className = 'list-group-item';
+    li.innerHTML = `<strong>${u.email}</strong><br><small class="text-muted">${u.id}</small>${permInfo}`;
+    li.style.cursor = 'pointer';
+    li.addEventListener('click', async () => {
+      document.getElementById('target-user-id').value = u.id;
+      if (selectedUserElement) selectedUserElement.classList.remove('active');
+      li.classList.add('active');
+      selectedUserElement = li;
+      await loadAdminUserVehicles(u.id);
+      window.scrollTo({ top: document.getElementById('set-permission-form').offsetTop, behavior: 'smooth' });
+    });
+    list.appendChild(li);
+  }
+}
+// Načítanie vozidiel pre vybraného používateľa (admin)
+async function loadAdminUserVehicles(userId) {
+  const res = await fetch(API_BASE + '/admin/vehicles', {
+    headers: { Authorization: 'Bearer ' + localStorage.getItem(tokenKey) }
+  });
+  const all = await res.json();
+  const vehicles = all.filter(v => v.user_id === userId);
+  const container = document.getElementById('admin-vehicle-list');
+  container.innerHTML = `<h5>Značky používateľa</h5><ul class="list-group"></ul>`;
+  const ul = container.querySelector('ul');
+  vehicles.forEach(v => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `
+      <span>${v.spz}</span>
+      <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${v.id}', '${userId}')">🗑</button>
+    `;
+    ul.appendChild(li);
+  });
+  document.getElementById("admin-add-vehicle-form").style.display = "block";
+}
+
+// Odoslanie novej ŠPZ ako admin
+document.getElementById("admin-add-vehicle-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const spz = document.getElementById("admin-new-spz").value;
+  const userId = document.getElementById("target-user-id").value;
+  const res = await fetch(`${API_BASE}/admin/vehicles/${userId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify({ spz })
+  });
+  if (res.ok) {
+    document.getElementById("admin-new-spz").value = "";
+    await loadAdminUserVehicles(userId);
+  } else {
+    alert("Nepodarilo sa pridať ŠPZ.");
+  }
+});
+
+// Mazanie ŠPZ
+async function deleteVehicle(vehicleId, userId) {
+  if (!confirm("Naozaj chceš zmazať túto ŠPZ?")) return;
+  const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    }
+  });
+  if (res.ok) {
+    await loadAdminUserVehicles(userId);
+  } else {
+    alert("Nepodarilo sa zmazať vozidlo.");
+  }
+}
+
+// Pridanie ŠPZ používateľom
+document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const spz = document.getElementById('spz').value;
+  const res = await fetch(API_BASE + '/vehicles', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify({spz})
+  });
+  if (res.ok) {
+    document.getElementById('spz').value = '';
+    loadVehicles();
+  } else {
+    alert('Chyba pri pridávaní vozidla');
+  }
+});
+
+// Nastavenie povolenia pre používateľa (admin)
+document.getElementById('set-permission-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const userId = document.getElementById('target-user-id').value;
+  const entries = document.getElementById('daily-entries').value;
+  const window = document.getElementById('time-window').value;
+  const res = await fetch(`${API_BASE}/admin/permissions/${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify({ daily_entries: parseInt(entries), time_window: window })
+  });
+  if (res.ok) {
+    alert('Povolenie nastavené');
+    document.getElementById('target-user-id').value = '';
+    document.getElementById('daily-entries').value = '';
+    document.getElementById('time-window').value = '';
+    loadUserList();
+  } else {
+    alert('Chyba pri nastavovaní povolenia');
+  }
+});
+
+//export button
+document.getElementById('export-btn').addEventListener('click', async () => {
+  const res = await fetch(`${API_BASE}/admin/export`, {
+    headers: {
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    }
+  });
+  if (res.ok) {
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'export.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } else {
+    alert('Nepodarilo sa exportovať dáta.');
+  }
+});
+
+// Odhlásenie
+document.getElementById('logout').addEventListener('click', () => {
+  localStorage.removeItem(tokenKey);
+  location.reload();
+});
+</script>
+</body>
+</html>
+  

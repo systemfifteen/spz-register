@@ -1,0 +1,127 @@
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List, Optional
+from passlib.context import CryptContext
+from uuid import uuid4
+
+app = FastAPI()
+
+# CORS pre frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --- Simulovaná databáza ---
+users_db = {}
+vehicles_db = {}
+permissions_db = {}
+
+# --- Bezpečnosť ---
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+tokens = {}
+
+# --- Modely ---
+class User(BaseModel):
+    id: str
+    email: str
+    hashed_password: str
+    is_admin: bool = False
+
+class Vehicle(BaseModel):
+    id: str
+    user_id: str
+    spz: str
+
+class VehicleCreate(BaseModel):
+    spz: str
+
+class UserCreate(BaseModel):
+    email: str
+    password: str
+
+class Permission(BaseModel):
+    user_id: str
+    daily_entries: int
+    time_window: Optional[str] = "04:00 - 09:00"
+
+class PermissionUpdate(BaseModel):
+    daily_entries: int
+    time_window: Optional[str] = None
+
+# --- Pomocné funkcie ---
+def get_user_by_token(token: str = Depends(oauth2_scheme)) -> User:
+    user_id = tokens.get(token)
+    if user_id and user_id in users_db:
+        return users_db[user_id]
+    raise HTTPException(status_code=401, detail="Invalid token")
+
+# --- API ---
+@app.post("/register")
+def register(user: UserCreate):
+    for u in users_db.values():
+        if u.email.lower() == user.email.lower():
+            raise HTTPException(status_code=400, detail="Email already registered")
+    uid = str(uuid4())
+    hashed = pwd_context.hash(user.password)
+    users_db[uid] = User(id=uid, email=user.email, hashed_password=hashed)
+    return {"message": "User registered"}
+
+@app.post("/token")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    for u in users_db.values():
+        if u.email.lower() == form_data.username.lower() and pwd_context.verify(form_data.password, u.hashed_password):
+            token = str(uuid4())
+            tokens[token] = u.id
+            return {"access_token": token, "token_type": "bearer"}
+    raise HTTPException(status_code=401, detail="Incorrect email or password")
+
+@app.get("/me")
+def get_me(user: User = Depends(get_user_by_token)):
+    return user
+
+@app.post("/vehicles")
+def add_vehicle(vehicle: VehicleCreate, user: User = Depends(get_user_by_token)):
+    vid = str(uuid4())
+    v = Vehicle(id=vid, user_id=user.id, spz=vehicle.spz)
+    vehicles_db[vid] = v
+    return v
+
+@app.get("/vehicles")
+def list_vehicles(user: User = Depends(get_user_by_token)):
+    return [v for v in vehicles_db.values() if v.user_id == user.id]
+
+@app.get("/admin/vehicles")
+def list_all_vehicles(user: User = Depends(get_user_by_token)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    return list(vehicles_db.values())
+
+@app.post("/admin/permissions/{user_id}")
+def set_permission(user_id: str, data: PermissionUpdate, user: User = Depends(get_user_by_token)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    permissions_db[user_id] = Permission(
+        user_id=user_id,
+        daily_entries=data.daily_entries,
+        time_window=data.time_window or "04:00 - 09:00"
+    )
+    return {"message": "Permission updated"}
+
+@app.get("/permissions")
+def get_permission(user: User = Depends(get_user_by_token)):
+    perm = permissions_db.get(user.id)
+    if not perm:
+        raise HTTPException(status_code=404, detail="Permission not set")
+    return perm
+
+@app.get("/debug/users")
+def debug_users():
+    from fastapi.encoders import jsonable_encoder
+    return jsonable_encoder(list(users_db.values()))

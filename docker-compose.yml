@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  fastapi:
+    build: .
+    container_name: fastapi-spz
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

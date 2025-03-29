@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.env
+.venv/
+dist/
+build/
+
+# SQLite databáza
+*.sqlite
+*.db
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# VSCode / IDE
+.vscode/
+.idea/
+
+# MacOS a systémové súbory
+.DS_Store
+Thumbs.db
