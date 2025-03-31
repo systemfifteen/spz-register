@@ -1,13 +1,8 @@
-import os
 import sys
+import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from sqlalchemy import create_engine
-from database import Base
 
-# Absolútna cesta k databáze vo vnútri kontajnera
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, '..', 'data', 'db.sqlite')
-engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
+from database import Base, engine
 
-Base.metadata.create_all(engine)
-print("Databáza inicializovaná.")
+Base.metadata.create_all(bind=engine)
+print("✅ Databáza inicializovaná.")
