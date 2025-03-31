@@ -308,5 +308,5 @@ if os.path.isdir("frontend"):
     app.mount("/static", StaticFiles(directory="frontend", html=True), name="static")
 
 @app.get("/")
-    def read_index():
-        return FileResponse("frontend/index.html")
+def read_index():
+    return FileResponse("frontend/index.html")
