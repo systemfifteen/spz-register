@@ -1,5 +1,6 @@
 import os
 import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from database import Base, User, get_password_hash
