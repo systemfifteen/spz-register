@@ -1,41 +1,29 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from passlib.context import CryptContext
+import os
 import sys
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine
+from database import Base, User, get_password_hash
 
-Base = declarative_base()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
-
-class User(Base):
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_admin = Column(Boolean, default=False)
-
-# SQLite path
-engine = create_engine("sqlite:///data/db.sqlite", echo=False)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Získaj údaje z argumentov
-if len(sys.argv) != 3:
-    print("Použitie: python3 scripts/create_admin_inline.py email heslo")
+if len(sys.argv) < 3:
+    print("Použitie: create_admin_inline.py <email> <heslo>")
     sys.exit(1)
 
 email = sys.argv[1]
 password = sys.argv[2]
 
-db = SessionLocal()
+# Absolútna cesta k databáze
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, '..', 'data', 'db.sqlite')
+engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
+
+Base.metadata.create_all(engine)
+db = Session(bind=engine)
+
 existing = db.query(User).filter_by(email=email).first()
-if existing:
-    print("Používateľ už existuje.")
-else:
-    user = User(email=email, hashed_password=get_password_hash(password), is_admin=True)
-    db.add(user)
+if not existing:
+    new_user = User(email=email, hashed_password=get_password_hash(password), is_admin=True)
+    db.add(new_user)
     db.commit()
     print("Admin vytvorený.")
+else:
+    print("Používateľ už existuje.")
