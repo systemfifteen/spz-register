@@ -4,8 +4,7 @@ services:
   fastapi:
     build: .
     container_name: fastapi-spz
-    ports:
-      - "8000:8000"
+    network_mode: "host"
     volumes:
       - ./data:/app/data
     restart: unless-stopped
