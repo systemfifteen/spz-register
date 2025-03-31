@@ -37,10 +37,26 @@
     <div id="admin-panel" class="mt-5" style="display:none;">
       <hr>
       <h4>Admin rozhranie – nastavenie povolení</h4>
+      <hr>
+      <h5>Import používateľov</h5>
+      <textarea id="import-data" class="form-control mb-2" rows="5" placeholder="email,heslo[,admin] – jeden na riadok"></textarea>
+      <button id="import-btn" class="btn btn-success">Importovať používateľov</button>
 
+      <form id="admin-create-user-form" class="mb-4">
+        <h5>Vytvoriť nového používateľa</h5>
+        <input type="email" class="form-control mb-2" id="new-user-email" placeholder="Email" required>
+        <input type="password" class="form-control mb-2" id="new-user-password" placeholder="Heslo" required>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="new-user-is-admin">
+          <label class="form-check-label" for="new-user-is-admin">Admin účet</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Vytvoriť používateľa</button>
+      </form>
+      
       <div class="mb-3">
         <label class="form-label">Zoznam používateľov</label>
         <input type="text" class="form-control mb-2" id="search-users" placeholder="Vyhľadať podľa emailu...">
+        <button id="delete-users-btn" class="btn btn-danger btn-sm mb-2" disabled>Zmazať vybraných</button>
         <ul id="user-list" class="list-group"></ul>
       </div>
       <form id="set-permission-form" class="mt-4">
@@ -67,6 +83,13 @@
     </div>
 
     <button id="logout" class="btn btn-secondary mt-3">Odhlásiť sa</button>
+    <hr>
+<h5>Zmeniť heslo</h5>
+<form id="change-password-form">
+  <input type="password" class="form-control mb-2" id="old-password" placeholder="Aktuálne heslo" required>
+  <input type="password" class="form-control mb-2" id="new-password" placeholder="Nové heslo" required>
+  <button type="submit" class="btn btn-outline-secondary">Zmeniť heslo</button>
+</form>
   </div>
 </div>
 <script>
@@ -177,7 +200,16 @@ async function loadUserList(filter = "") {
     } catch {}
     const li = document.createElement('li');
     li.className = 'list-group-item';
-    li.innerHTML = `<strong>${u.email}</strong><br><small class="text-muted">${u.id}</small>${permInfo}`;
+    li.innerHTML = `
+  <div class="form-check">
+    <input class="form-check-input user-checkbox" type="checkbox" value="${u.id}">
+    <label class="form-check-label">
+      <strong>${u.email}</strong>
+      ${u.is_admin ? '<span class="badge bg-warning text-dark ms-2">admin</span>' : ''}
+      <br><small class="text-muted">${u.id}</small>${permInfo}
+    </label>
+  </div>
+`;
     li.style.cursor = 'pointer';
     li.addEventListener('click', async () => {
       document.getElementById('target-user-id').value = u.id;
@@ -190,6 +222,31 @@ async function loadUserList(filter = "") {
     list.appendChild(li);
   }
 }
+
+document.getElementById('user-list').addEventListener('change', () => {
+  const anyChecked = document.querySelectorAll('.user-checkbox:checked').length > 0;
+  document.getElementById('delete-users-btn').disabled = !anyChecked;
+});
+
+document.getElementById('delete-users-btn').addEventListener('click', async () => {
+  if (!confirm("Naozaj chceš zmazať vybraných používateľov?")) return;
+  const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+  const res = await fetch(`${API_BASE}/admin/users`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify(ids)
+  });
+  if (res.ok) {
+    alert("Používatelia boli zmazaní");
+    loadUserList();
+  } else {
+    alert("Chyba pri mazaní");
+  }
+});
+
 // Načítanie vozidiel pre vybraného používateľa (admin)
 async function loadAdminUserVehicles(userId) {
   const res = await fetch(API_BASE + '/admin/vehicles', {
@@ -319,6 +376,81 @@ document.getElementById('logout').addEventListener('click', () => {
   localStorage.removeItem(tokenKey);
   location.reload();
 });
+
+// user create
+document.getElementById('admin-create-user-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('new-user-email').value;
+  const password = document.getElementById('new-user-password').value;
+  const isAdmin = document.getElementById('new-user-is-admin').checked;
+
+  const res = await fetch(`${API_BASE}/admin/users?is_admin=${isAdmin}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify({ email, password })
+  });
+
+  if (res.ok) {
+    alert("Používateľ vytvorený");
+    document.getElementById('admin-create-user-form').reset();
+    loadUserList();
+  } else {
+    const err = await res.json();
+    alert("Chyba: " + err.detail);
+  }
+});
+
+// import logika
+document.getElementById("import-btn").addEventListener("click", async () => {
+  const raw = document.getElementById("import-data").value.trim();
+  if (!raw) return;
+
+  const lines = raw.split("\n").map(line => line.split(","));
+  const res = await fetch(`${API_BASE}/admin/import`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify(lines)
+  });
+
+  if (res.ok) {
+    alert("Import úspešný");
+    document.getElementById("import-data").value = "";
+    loadUserList();
+  } else {
+    alert("Chyba pri importe");
+  }
+});
+
+//zmena hesla
+document.getElementById("change-password-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const old_password = document.getElementById("old-password").value;
+  const new_password = document.getElementById("new-password").value;
+
+  const res = await fetch(`${API_BASE}/change-password`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + localStorage.getItem(tokenKey)
+    },
+    body: JSON.stringify({ old_password, new_password })
+  });
+
+  if (res.ok) {
+    alert("Heslo úspešne zmenené");
+    document.getElementById("change-password-form").reset();
+  } else {
+    const err = await res.json();
+    alert("Chyba: " + err.detail);
+  }
+});
+
 </script>
 </body>
 </html>

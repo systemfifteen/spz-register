@@ -1,14 +1,15 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional
-from passlib.context import CryptContext
-from uuid import uuid4
-from sqlmodel import SQLModel, Field, Session, create_engine, select
-import csv
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from passlib.context import CryptContext
+from sqlmodel import SQLModel, Field, Session, create_engine, select, delete
+from typing import List, Optional
+from uuid import uuid4
 from io import StringIO
+import csv
+
 
 app = FastAPI()
 
@@ -54,6 +55,10 @@ class Permission(SQLModel, table=True):
 class PermissionUpdate(BaseModel):
     daily_entries: int
     time_window: Optional[str] = None
+
+class PasswordChange(BaseModel):
+    old_password: str
+    new_password: str
 
 def get_user_by_token(token: str = Depends(oauth2_scheme)) -> User:
     user_id = tokens.get(token)
@@ -215,3 +220,78 @@ def export_csv(user: User = Depends(get_user_by_token)):
     return StreamingResponse(output, media_type="text/csv", headers={
         "Content-Disposition": "attachment; filename=export.csv"
     })
+
+@app.post("/admin/users")
+def admin_create_user(data: UserCreate, is_admin: Optional[bool] = False, user: User = Depends(get_user_by_token)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    with Session(engine) as session:
+        existing = session.exec(select(User).where(User.email == data.email)).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already exists")
+        new_user = User(
+            email=data.email,
+            hashed_password=pwd_context.hash(data.password),
+            is_admin=is_admin
+        )
+        session.add(new_user)
+        session.commit()
+        session.refresh(new_user)
+        return {"message": "Používateľ vytvorený", "user_id": new_user.id}
+
+@app.delete("/admin/users")
+def delete_users(user_ids: List[str] = Body(...), user: User = Depends(get_user_by_token)):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    
+    with Session(engine) as session:
+        for uid in user_ids:
+            session.exec(delete(Vehicle).where(Vehicle.user_id == uid))  # zmaž ŠPZ
+            session.exec(delete(Permission).where(Permission.user_id == uid))  # zmaž povolenie
+            session.exec(delete(User).where(User.id == uid))  # zmaž používateľa
+        session.commit()
+    
+    return {"message": f"Zmazaných {len(user_ids)} používateľov"}
+
+@app.post("/admin/import")
+def import_users(
+    data: List[List[str]] = Body(...),
+    user: User = Depends(get_user_by_token)
+):
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+
+    created = []
+    with Session(engine) as session:
+        for row in data:
+            if len(row) < 2:
+                continue
+            email, password = row[0].strip(), row[1].strip()
+            is_admin = row[2].strip().lower() == "true" if len(row) > 2 else False
+
+            exists = session.exec(select(User).where(User.email == email)).first()
+            if exists:
+                continue
+            new_user = User(
+                email=email,
+                hashed_password=pwd_context.hash(password),
+                is_admin=is_admin
+            )
+            session.add(new_user)
+            created.append(email)
+        session.commit()
+    return {"message": f"Importovaných {len(created)} používateľov"}
+
+@app.post("/change-password")
+def change_password(data: PasswordChange, user: User = Depends(get_user_by_token)):
+    with Session(engine) as session:
+        db_user = session.get(User, user.id)
+        if not db_user or not pwd_context.verify(data.old_password, db_user.hashed_password):
+            raise HTTPException(status_code=400, detail="Nesprávne aktuálne heslo")
+
+        db_user.hashed_password = pwd_context.hash(data.new_password)
+        session.add(db_user)
+        session.commit()
+
+    return {"message": "Heslo bolo zmenené"}
