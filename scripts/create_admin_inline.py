@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 from passlib.context import CryptContext
+from typing import Optional
 import sys
 import os
 
@@ -15,7 +16,7 @@ def get_password_hash(password):
 
 # User model
 class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
     email: str
     hashed_password: str
     is_admin: bool = False
