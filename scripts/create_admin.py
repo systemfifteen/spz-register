@@ -1,8 +1,10 @@
 # scripts/create_admin.py
 
 from sqlalchemy.orm import Session
-from app.database import engine, User, get_password_hash
-#from database import engine, User, get_password_hash
+import sys
+sys.path.append('/app')
+
+from database import engine, User, get_password_hash
 
 def create_admin(email: str, password: str):
     db = Session(bind=engine)
