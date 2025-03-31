@@ -295,3 +295,7 @@ def change_password(data: PasswordChange, user: User = Depends(get_user_by_token
         session.commit()
 
     return {"message": "Heslo bolo zmenené"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
