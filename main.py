@@ -1,5 +1,8 @@
+import os
 from fastapi import FastAPI, HTTPException, Depends, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -299,3 +302,11 @@ def change_password(data: PasswordChange, user: User = Depends(get_user_by_token
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+#servujeme staticky frontend cez fastapi
+if os.path.isdir("frontend"):
+    app.mount("/static", StaticFiles(directory="frontend", html=True), name="static")
+
+@app.get("/")
+    def read_index():
+        return FileResponse("frontend/index.html")
