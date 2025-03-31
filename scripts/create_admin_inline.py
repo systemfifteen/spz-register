@@ -2,9 +2,8 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from sqlalchemy.orm import Session
-from database import Base, engine, User, get_password_hash
-import sys
+from sqlmodel import Session, select
+from database import engine, User, get_password_hash
 
 if len(sys.argv) != 3:
     print("Použitie: create_admin_inline.py email heslo")
@@ -13,12 +12,12 @@ if len(sys.argv) != 3:
 email = sys.argv[1]
 password = sys.argv[2]
 
-db = Session(bind=engine)
-existing = db.query(User).filter_by(email=email).first()
-if existing:
-    print("⚠️  Používateľ už existuje.")
-else:
-    new_user = User(email=email, hashed_password=get_password_hash(password), is_admin=True)
-    db.add(new_user)
-    db.commit()
-    print("✅ Admin vytvorený.")
+with Session(engine) as session:
+    result = session.exec(select(User).where(User.email == email)).first()
+    if result:
+        print("⚠️  Používateľ už existuje.")
+    else:
+        user = User(email=email, hashed_password=get_password_hash(password), is_admin=True)
+        session.add(user)
+        session.commit()
+        print("✅ Admin vytvorený.")
