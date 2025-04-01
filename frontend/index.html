@@ -95,7 +95,8 @@
 <script>
   const form = document.getElementById('login-form');
   const tokenKey = 'access_token';
-  const API_BASE = "http://localhost:8000";
+  // const API_BASE = "http://localhost:8000";
+  const API_BASE = window.location.origin;
   let selectedUserElement = null;
   
   // Prihlásenie
