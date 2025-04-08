@@ -226,6 +226,7 @@ async function loadUserList(filter = "") {
       <strong>${u.email}</strong>
       ${u.is_admin ? '<span class="badge bg-warning text-dark ms-2">admin</span>' : ''}
       <br><small class="text-muted">${u.id}</small>${permInfo}
+      <br><small class="text-muted">Prihlásení: ${u.login_count ?? 0}, posledné: ${u.last_login ? new Date(u.last_login).toLocaleString() : 'nikdy'}</small>
     </label>
   </div>
 `;

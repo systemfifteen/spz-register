@@ -7,10 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from passlib.context import CryptContext
-from sqlmodel import SQLModel, Field, Session, create_engine, select, delete
+from sqlmodel import SQLModel, Field, Session, create_engine, select, delete, Column, DateTime, Integer
 from typing import List, Optional
 from uuid import uuid4
 from io import StringIO
+from datetime import datetime
 import csv
 
 
@@ -37,6 +38,8 @@ class User(SQLModel, table=True):
     email: str
     hashed_password: str
     is_admin: bool = False
+    login_count: int = 0
+    last_login: Optional[datetime] = None
 
 class UserCreate(BaseModel):
     email: str
@@ -95,6 +98,13 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         user = session.exec(select(User).where(User.email == form_data.username)).first()
         if not user or not pwd_context.verify(form_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Incorrect email or password")
+
+        # 🆕 aktualizuj počet prihlásení a čas
+        user.login_count += 1
+        user.last_login = datetime.now()
+        session.add(user)
+        session.commit()
+
         token = str(uuid4())
         tokens[token] = user.id
         return {"access_token": token, "token_type": "bearer"}
