@@ -3,6 +3,8 @@
 from sqlmodel import SQLModel, Field, create_engine, Session, select
 from passlib.context import CryptContext
 from typing import Optional
+from uuid import uuid4
+
 import sys
 
 # Heslo hashovanie ako v main.py
@@ -14,8 +16,14 @@ def get_password_hash(password: str) -> str:
 
 
 # Definícia modelu používateľa
+#class User(SQLModel, table=True):
+#    id: Optional[int] = Field(default=None, primary_key=True)
+#    email: str
+#    hashed_password: str
+#    is_admin: bool = False
+
 class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[str] = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     email: str
     hashed_password: str
     is_admin: bool = False
