@@ -6,6 +6,9 @@ from typing import Optional
 from uuid import uuid4
 import sys
 import os
+import bcrypt
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type("obj", (), {"__version__": bcrypt.__version__})
 
 # Heslo hashovanie
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
