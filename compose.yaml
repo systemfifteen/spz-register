@@ -20,11 +20,17 @@ services:
       - proxy
     labels:
       - traefik.enable=true
+      # HTTPS router
       - traefik.http.routers.spz.rule=Host(`spz.poetika.online`)
-      - traefik.http.routers.spz.entrypoints=websecure
+      - traefik.http.routers.spz.entrypoints=https
       - traefik.http.routers.spz.tls.certresolver=letsencrypt
-      # voliteľne redirect HTTP→HTTPS
-      - traefik.http.routers.spz.middlewares=redirect-to-https
+      - traefik.http.services.spz.loadbalancer.server.port=8000
+      # HTTP → HTTPS redirect
+      - traefik.http.routers.spz-http.rule=Host(`spz.poetika.online`)
+      - traefik.http.routers.spz-http.entrypoints=http
+      - traefik.http.routers.spz-http.middlewares=https-redirect
+      - traefik.http.middlewares.https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.https-redirect.redirectscheme.permanent=true
 
 networks:
   proxy:
