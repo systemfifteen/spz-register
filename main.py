@@ -53,6 +53,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
 
+if SECRET_KEY == "change-me-in-production":
+    raise RuntimeError("SECRET_KEY nie je nastavený! Nastav ho cez environment premennú.")
+
 def create_access_token(user_id: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     return jwt.encode({"sub": user_id, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
@@ -64,6 +67,13 @@ class User(SQLModel, table=True):
     is_admin: bool = False
     login_count: int = 0
     last_login: Optional[datetime] = None
+
+class UserPublic(BaseModel):
+    id: str
+    email: str
+    is_admin: bool
+    login_count: int
+    last_login: Optional[datetime]
 
 class UserCreate(BaseModel):
     email: str
@@ -139,7 +149,8 @@ def require_admin(user: User = Depends(get_user_by_token)) -> User:
     return user
 
 @app.post("/register")
-def register(user: UserCreate):
+@limiter.limit("5/minute")
+def register(request: Request, user: UserCreate):
     with Session(engine) as session:
         existing = session.exec(select(User).where(User.email == user.email)).first()
         if existing:
@@ -175,7 +186,7 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
         )
         return {"message": "Prihlásenie úspešné"}
 
-@app.get("/me")
+@app.get("/me", response_model=UserPublic)
 def get_me(user: User = Depends(get_user_by_token)):
     return user
 
@@ -244,7 +255,7 @@ def get_permission_for_user(user_id: str, user: User = Depends(require_admin)):
             raise HTTPException(status_code=404, detail="Permission not set")
         return perm
 
-@app.get("/admin/users")
+@app.get("/admin/users", response_model=List[UserPublic])
 def list_users(user: User = Depends(require_admin)):
     with Session(engine) as session:
         return session.exec(select(User)).all()
