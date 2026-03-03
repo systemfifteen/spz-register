@@ -2,210 +2,407 @@
 <html lang="sk">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Registrácia ŠPZ – Pešia zóna BB</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --bb-primary: #1a3c6e;
+      --bb-accent:  #c8973e;
+    }
+    body { background: #f5f6fa; }
+
+    /* ── Navbar ── */
+    .navbar-bb {
+      background: var(--bb-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    }
+    .navbar-bb .navbar-brand { font-weight: 600; font-size: .95rem; color: #fff; line-height: 1.2; }
+    .navbar-bb .navbar-brand small { color: rgba(255,255,255,.65); font-weight: 400; }
+    .city-logo { height: 42px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.3)); }
+
+    /* ── Login page ── */
+    .login-page {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--bb-primary) 0%, #2d5aa0 100%);
+    }
+    .login-card { width: 100%; max-width: 420px; border: none; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .login-header { background: #fff; border-radius: 12px 12px 0 0; padding: 2rem; text-align: center; border-bottom: 3px solid var(--bb-accent); }
+    .login-header h5 { color: var(--bb-primary); font-weight: 700; margin-bottom: .15rem; }
+    .login-header small { color: #6c757d; }
+
+    /* ── Cards ── */
+    .card { border: none; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .card-header-bb { background: var(--bb-primary); color: #fff; border-radius: 10px 10px 0 0 !important; font-weight: 600; padding: .85rem 1.2rem; }
+    .card-header-admin { background: #2d3748; color: #fff; border-radius: 10px 10px 0 0 !important; font-weight: 600; padding: .85rem 1.2rem; }
+
+    /* ── Buttons ── */
+    .btn-bb  { background: var(--bb-primary); border-color: var(--bb-primary); color: #fff; }
+    .btn-bb:hover  { background: #152f57; border-color: #152f57; color: #fff; }
+    .btn-accent { background: var(--bb-accent); border-color: var(--bb-accent); color: #fff; }
+    .btn-accent:hover { background: #a8761e; border-color: #a8761e; color: #fff; }
+
+    /* ── List group tweaks ── */
+    .list-group-item { border-left: none; border-right: none; }
+    .list-group-item:first-child { border-top: none; }
+
+    /* ── Permission block ── */
+    .perm-badge { background: rgba(26,60,110,.07); border-radius: 8px; padding: 1rem; }
+
+    /* ── Admin section ── */
+    .admin-section { border-left: 4px solid var(--bb-accent); }
+
+    /* ── Toasts ── */
+    .toast-container { z-index: 9999; }
+  </style>
 </head>
-<body class="bg-light">
-<div class="container mt-5">
-  <h2 class="mb-4">Prihlásenie</h2>
-  <form id="login-form">
-    <div class="mb-3">
-      <label for="email" class="form-label">Email</label>
-      <input type="email" class="form-control" id="email" required>
+<body>
+
+<!-- Toast container -->
+<div class="toast-container position-fixed top-0 end-0 p-3"></div>
+
+<!-- ══════════════ LOGIN PAGE ══════════════ -->
+<div id="login-page" class="login-page">
+  <div class="login-card card">
+    <div class="login-header">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Coat_of_Arms_of_Bansk%C3%A1_Bystrica.svg"
+           alt="Erb mesta Banská Bystrica" height="72" class="mb-3">
+      <h5>Registrácia ŠPZ</h5>
+      <small>Pešia zóna – Banská Bystrica</small>
     </div>
-    <div class="mb-3">
-      <label for="password" class="form-label">Heslo</label>
-      <input type="password" class="form-control" id="password" required>
-    </div>
-    <button type="submit" class="btn btn-primary">Prihlásiť sa</button>
-  </form>
-
-  <div id="app" style="display:none;">
-    <hr>
-    <h4>Vaše vozidlá</h4>
-    <ul id="vehicle-list" class="list-group mb-3"></ul>
-
-    <form id="add-vehicle-form">
-      <div class="input-group">
-        <input type="text" class="form-control" id="spz" placeholder="Zadajte ŠPZ" required>
-        <button class="btn btn-success" type="submit">Pridať</button>
-      </div>
-    </form>
-
-    <div id="permission-info" class="mt-4"></div>
-
-    <div id="admin-panel" class="mt-5" style="display:none;">
-      <hr>
-      <h4>Admin rozhranie – nastavenie povolení</h4>
-      <hr>
-      <h5>Import používateľov</h5>
-      <textarea id="import-data" class="form-control mb-2" rows="5" placeholder="email,heslo[,admin] – jeden na riadok"></textarea>
-      <button id="import-btn" class="btn btn-success">Importovať používateľov</button>
-
-      <form id="admin-create-user-form" class="mb-4">
-        <h5>Vytvoriť nového používateľa</h5>
-        <input type="email" class="form-control mb-2" id="new-user-email" placeholder="Email" required>
-        <input type="password" class="form-control mb-2" id="new-user-password" placeholder="Heslo" required>
-        <div class="form-check mb-2">
-          <input class="form-check-input" type="checkbox" id="new-user-is-admin">
-          <label class="form-check-label" for="new-user-is-admin">Admin účet</label>
+    <div class="card-body p-4">
+      <form id="login-form">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Email</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" class="form-control" id="email" placeholder="vas@email.sk" required>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Vytvoriť používateľa</button>
-      </form>
-      
-      <div class="mb-3">
-        <label class="form-label">Zoznam používateľov</label>
-        <input type="text" class="form-control mb-2" id="search-users" placeholder="Vyhľadať podľa emailu...">
-        <button id="delete-users-btn" class="btn btn-danger btn-sm mb-2" disabled>Zmazať vybraných</button>
-        <ul id="user-list" class="list-group"></ul>
-      </div>
-      <form id="set-permission-form" class="mt-4">
-        <input type="hidden" id="target-user-id">
-        <div class="mb-2">
-          <input type="number" class="form-control" id="daily-entries" placeholder="Počet vstupov denne" required>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Heslo</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+          </div>
         </div>
-        <div class="mb-2">
-          <input type="text" class="form-control" id="time-window" placeholder="Časové okno (napr. 04:00 - 09:00)" required>
-        </div>
-        <button type="submit" class="btn btn-warning">Nastaviť povolenie</button>
-        <button id="export-btn" class="btn btn-outline-primary mt-3">⬇️ Export CSV</button>
-
-      </form>
-
-      <div id="admin-vehicle-list" class="mt-4"></div>
-
-      <form id="admin-add-vehicle-form" class="mt-3" style="display:none">
-        <div class="input-group">
-          <input type="text" class="form-control" id="admin-new-spz" placeholder="Zadaj novú ŠPZ pre používateľa">
-          <button class="btn btn-success" type="submit">Pridať ŠPZ</button>
-        </div>
+        <button type="submit" class="btn btn-bb w-100 py-2" id="login-btn">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Prihlásiť sa
+        </button>
       </form>
     </div>
-
-    <button id="logout" class="btn btn-secondary mt-3">Odhlásiť sa</button>
-    <hr>
-<h5>Zmeniť heslo</h5>
-<form id="change-password-form">
-  <input type="password" class="form-control mb-2" id="old-password" placeholder="Aktuálne heslo" required>
-  <input type="password" class="form-control mb-2" id="new-password" placeholder="Nové heslo" required>
-  <button type="submit" class="btn btn-outline-secondary">Zmeniť heslo</button>
-</form>
   </div>
 </div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="app" style="display:none;">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-bb sticky-top">
+    <div class="container-fluid">
+      <span class="navbar-brand d-flex align-items-center gap-2">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/d/dd/Coat_of_Arms_of_Bansk%C3%A1_Bystrica.svg"
+             alt="Erb mesta BB" class="city-logo">
+        <span>Registrácia ŠPZ<br><small>Pešia zóna – Banská Bystrica</small></span>
+      </span>
+      <button id="logout" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-box-arrow-right me-1"></i>Odhlásiť
+      </button>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div class="row g-4">
+
+      <!-- Vozidlá -->
+      <div class="col-md-6">
+        <div class="card h-100">
+          <div class="card-header-bb d-flex align-items-center gap-2">
+            <i class="bi bi-car-front-fill"></i> Vaše vozidlá
+          </div>
+          <div class="card-body p-0">
+            <ul id="vehicle-list" class="list-group list-group-flush"></ul>
+          </div>
+          <div class="card-footer bg-white border-top p-3">
+            <form id="add-vehicle-form">
+              <div class="input-group">
+                <input type="text" class="form-control" id="spz" placeholder="Napr. BA123AB" required>
+                <button class="btn btn-success" type="submit">
+                  <i class="bi bi-plus-lg"></i> Pridať
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Povolenie + Zmena hesla -->
+      <div class="col-md-6 d-flex flex-column gap-4">
+        <div class="card">
+          <div class="card-header-bb d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check"></i> Vaše povolenie
+          </div>
+          <div class="card-body">
+            <div id="permission-info">
+              <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Povolenie nie je nastavené.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header-bb d-flex align-items-center gap-2">
+            <i class="bi bi-key"></i> Zmena hesla
+          </div>
+          <div class="card-body">
+            <form id="change-password-form">
+              <div class="mb-2">
+                <input type="password" class="form-control" id="old-password" placeholder="Aktuálne heslo" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="new-password" placeholder="Nové heslo (min. 8 znakov)" required>
+              </div>
+              <button type="submit" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-arrow-repeat me-1"></i>Zmeniť heslo
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN PANEL ── -->
+    <div id="admin-panel" class="mt-4" style="display:none;">
+      <div class="card admin-section">
+        <div class="card-header-admin d-flex align-items-center gap-2">
+          <i class="bi bi-gear-fill"></i> Administrácia
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-4">
+
+            <!-- Vytvoriť + Import -->
+            <div class="col-lg-5">
+              <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-1"></i>Vytvoriť používateľa</h6>
+              <form id="admin-create-user-form" class="mb-4">
+                <input type="email" class="form-control mb-2" id="new-user-email" placeholder="Email" required>
+                <input type="password" class="form-control mb-2" id="new-user-password" placeholder="Heslo" required>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" id="new-user-is-admin">
+                  <label class="form-check-label" for="new-user-is-admin">Admin účet</label>
+                </div>
+                <button type="submit" class="btn btn-bb w-100">
+                  <i class="bi bi-person-plus me-1"></i>Vytvoriť
+                </button>
+              </form>
+
+              <h6 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i>Import používateľov</h6>
+              <textarea id="import-data" class="form-control mb-2" rows="4"
+                        placeholder="email,heslo[,admin] – jeden na riadok"></textarea>
+              <button id="import-btn" class="btn btn-outline-success w-100">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>Importovať
+              </button>
+            </div>
+
+            <!-- Zoznam používateľov -->
+            <div class="col-lg-7">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold mb-0"><i class="bi bi-people me-1"></i>Používatelia</h6>
+                <div class="d-flex gap-2">
+                  <button id="delete-users-btn" class="btn btn-danger btn-sm" disabled>
+                    <i class="bi bi-trash me-1"></i>Zmazať
+                  </button>
+                  <button id="export-btn" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-download me-1"></i>Export CSV
+                  </button>
+                </div>
+              </div>
+              <input type="text" class="form-control form-control-sm mb-2" id="search-users"
+                     placeholder="Vyhľadať podľa emailu...">
+              <ul id="user-list" class="list-group" style="max-height:400px;overflow-y:auto;"></ul>
+            </div>
+          </div>
+
+          <!-- Povolenie + vozidlá vybraného používateľa -->
+          <div class="row g-4 mt-1">
+            <div class="col-lg-5">
+              <h6 class="fw-bold mb-3"><i class="bi bi-sliders me-1"></i>Nastaviť povolenie</h6>
+              <form id="set-permission-form">
+                <input type="hidden" id="target-user-id">
+                <div class="mb-2">
+                  <input type="number" class="form-control" id="daily-entries"
+                         placeholder="Počet vstupov denne" required>
+                </div>
+                <div class="mb-3">
+                  <input type="text" class="form-control" id="time-window"
+                         placeholder="Časové okno (napr. 04:00 - 09:00)" required>
+                </div>
+                <button type="submit" class="btn btn-accent w-100">
+                  <i class="bi bi-check-lg me-1"></i>Uložiť povolenie
+                </button>
+              </form>
+            </div>
+
+            <div class="col-lg-7">
+              <div id="admin-vehicle-list" class="mb-3"></div>
+              <form id="admin-add-vehicle-form" style="display:none;">
+                <div class="input-group">
+                  <input type="text" class="form-control" id="admin-new-spz" placeholder="Nová ŠPZ pre používateľa">
+                  <button class="btn btn-success" type="submit">
+                    <i class="bi bi-plus-lg"></i> Pridať
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const API_BASE = window.location.origin;
   let selectedUserElement = null;
 
-  // Overenie prihlásenia pri načítaní stránky
+  /* ── Toast notifikácie ── */
+  function showToast(message, type = 'success') {
+    const icons = { success: 'bi-check-circle-fill', danger: 'bi-exclamation-triangle-fill', warning: 'bi-info-circle-fill' };
+    const container = document.querySelector('.toast-container');
+    const el = document.createElement('div');
+    el.className = `toast align-items-center text-bg-${type} border-0`;
+    el.setAttribute('role', 'alert');
+    el.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body"><i class="bi ${icons[type] || icons.success} me-2"></i>${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>`;
+    container.appendChild(el);
+    const toast = new bootstrap.Toast(el, { delay: 3500 });
+    toast.show();
+    el.addEventListener('hidden.bs.toast', () => el.remove());
+  }
+
+  /* ── Auth check pri načítaní ── */
   async function checkAuth() {
     const res = await fetch(API_BASE + '/me', { credentials: 'include' });
-    if (res.ok) {
-      const user = await res.json();
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      loadVehicles();
-      loadPermission();
-      if (user.is_admin) {
-        document.getElementById('admin-panel').style.display = 'block';
-        loadUserList();
-      }
-    }
+    if (res.ok) showApp(await res.json());
   }
   checkAuth();
 
-  // Prihlásenie
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const res = await fetch(API_BASE + '/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username: email, password: password }),
-      credentials: 'include'
-    });
-    if (res.ok) {
-      document.getElementById('login-form').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      loadVehicles();
-      loadPermission();
-      checkAdmin();
-    } else {
-      alert('Nesprávny email alebo heslo');
-    }
-  });
-
-  // Načítanie vozidiel používateľa
-  async function loadVehicles() {
-    const res = await fetch(API_BASE + '/vehicles', { credentials: 'include' });
-    const vehicles = await res.json();
-    const list = document.getElementById('vehicle-list');
-    list.innerHTML = '';
-    vehicles.forEach(v => {
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
-        <span>${v.spz}</span>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteUserVehicle('${v.id}')">🗑</button>
-      `;
-      list.appendChild(li);
-    });
-  }
-
-  // Zmazanie ŠPZ pre používateľa
-  async function deleteUserVehicle(vehicleId) {
-    if (!confirm("Naozaj chceš zmazať túto ŠPZ?")) return;
-    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    if (res.ok) {
-      await loadVehicles();
-    } else {
-      alert("Nepodarilo sa zmazať vozidlo.");
-    }
-  }
-
-  // Načítanie povolení pre používateľa
-  async function loadPermission() {
-    const res = await fetch(API_BASE + '/permissions', { credentials: 'include' });
-    if (res.ok) {
-      const perm = await res.json();
-      document.getElementById('permission-info').innerHTML = `
-        <div class="alert alert-info">
-          Povolené vstupy denne: <strong>${perm.daily_entries}</strong><br>
-          Časové okno: <strong>${perm.time_window}</strong>
-        </div>`;
-    }
-  }
-
-  // Zistí, či je používateľ admin
-  async function checkAdmin() {
-    const res = await fetch(API_BASE + '/me', { credentials: 'include' });
-    const user = await res.json();
+  function showApp(user) {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadVehicles();
+    loadPermission();
     if (user.is_admin) {
       document.getElementById('admin-panel').style.display = 'block';
       loadUserList();
     }
   }
 
-  // Debounce funkcia pre vyhľadávanie
-  function debounce(func, delay) {
-    let timeoutId;
-    return function (...args) {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(this, args), delay);
-    };
+  /* ── Prihlásenie ── */
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Prihlasujem...';
+    const res = await fetch(API_BASE + '/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username: document.getElementById('email').value, password: document.getElementById('password').value }),
+      credentials: 'include'
+    });
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Prihlásiť sa';
+    if (res.ok) {
+      const me = await fetch(API_BASE + '/me', { credentials: 'include' });
+      showApp(await me.json());
+    } else {
+      showToast('Nesprávny email alebo heslo', 'danger');
+    }
+  });
+
+  /* ── Odhlásenie ── */
+  document.getElementById('logout').addEventListener('click', async () => {
+    await fetch(API_BASE + '/logout', { method: 'POST', credentials: 'include' });
+    location.reload();
+  });
+
+  /* ── Vozidlá ── */
+  async function loadVehicles() {
+    const res = await fetch(API_BASE + '/vehicles', { credentials: 'include' });
+    const vehicles = await res.json();
+    const list = document.getElementById('vehicle-list');
+    list.innerHTML = '';
+    if (!vehicles.length) {
+      list.innerHTML = '<li class="list-group-item text-muted py-3"><i class="bi bi-info-circle me-1"></i>Zatiaľ žiadne vozidlá</li>';
+      return;
+    }
+    vehicles.forEach(v => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `<span><i class="bi bi-car-front me-2 text-muted"></i><strong>${v.spz}</strong></span>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteUserVehicle('${v.id}')"><i class="bi bi-trash"></i></button>`;
+      list.appendChild(li);
+    });
   }
 
-  const debouncedLoadUserList = debounce(() => {
-    loadUserList(document.getElementById('search-users').value);
-  }, 300);
+  async function deleteUserVehicle(vehicleId) {
+    if (!confirm('Naozaj chceš zmazať túto ŠPZ?')) return;
+    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, { method: 'DELETE', credentials: 'include' });
+    if (res.ok) { loadVehicles(); showToast('ŠPZ bola zmazaná'); }
+    else showToast('Nepodarilo sa zmazať vozidlo', 'danger');
+  }
 
-  document.getElementById('search-users').addEventListener('input', debouncedLoadUserList);
+  document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const spz = document.getElementById('spz').value;
+    const res = await fetch(API_BASE + '/vehicles', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', body: JSON.stringify({ spz })
+    });
+    if (res.ok) { document.getElementById('spz').value = ''; loadVehicles(); showToast('ŠPZ bola pridaná'); }
+    else { const err = await res.json(); showToast(err.detail || 'Chyba pri pridávaní', 'danger'); }
+  });
 
-  // Načítanie zoznamu používateľov
-  async function loadUserList(filter = "") {
+  /* ── Povolenie ── */
+  async function loadPermission() {
+    const res = await fetch(API_BASE + '/permissions', { credentials: 'include' });
+    if (res.ok) {
+      const perm = await res.json();
+      document.getElementById('permission-info').innerHTML = `
+        <div class="perm-badge">
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-center">
+              <div class="fs-1 fw-bold" style="color:var(--bb-primary);line-height:1">${perm.daily_entries}</div>
+              <small class="text-muted">vstupov denne</small>
+            </div>
+            <div class="vr"></div>
+            <div><i class="bi bi-clock me-1 text-muted"></i><strong>${perm.time_window}</strong></div>
+          </div>
+        </div>`;
+    }
+  }
+
+  /* ── Zmena hesla ── */
+  document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const res = await fetch(`${API_BASE}/change-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ old_password: document.getElementById('old-password').value, new_password: document.getElementById('new-password').value })
+    });
+    if (res.ok) { showToast('Heslo úspešne zmenené'); e.target.reset(); }
+    else { const err = await res.json(); showToast(err.detail || 'Chyba', 'danger'); }
+  });
+
+  /* ── Admin: zoznam používateľov ── */
+  function debounce(fn, d) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), d); }; }
+  document.getElementById('search-users').addEventListener('input', debounce(() => loadUserList(document.getElementById('search-users').value), 300));
+
+  async function loadUserList(filter = '') {
     const res = await fetch(API_BASE + '/admin/users', { credentials: 'include' });
     const users = await res.json();
     const list = document.getElementById('user-list');
@@ -215,238 +412,133 @@
       let permInfo = '';
       try {
         const p = await fetch(`${API_BASE}/admin/permissions/${u.id}`, { credentials: 'include' });
-        if (p.ok) {
-          const pdata = await p.json();
-          permInfo = `<br><small class="text-success">${pdata.daily_entries} vstupov • ${pdata.time_window}</small>`;
-        }
+        if (p.ok) { const pd = await p.json(); permInfo = `<span class="badge bg-success-subtle text-success">${pd.daily_entries}× • ${pd.time_window}</span>`; }
       } catch {}
       const li = document.createElement('li');
-      li.className = 'list-group-item';
+      li.className = 'list-group-item list-group-item-action';
       li.innerHTML = `
-    <div class="form-check">
-      <input class="form-check-input user-checkbox" type="checkbox" value="${u.id}">
-      <label class="form-check-label">
-        <strong>${u.email}</strong>
-        ${u.is_admin ? '<span class="badge bg-warning text-dark ms-2">admin</span>' : ''}
-        <br><small class="text-muted">${u.id}</small>${permInfo}
-        <br><small class="text-muted">Prihlásení: ${u.login_count ?? 0}, posledné: ${u.last_login ? new Date(u.last_login).toLocaleString() : 'nikdy'}</small>
-      </label>
-    </div>
-`;
-      li.style.cursor = 'pointer';
-      li.addEventListener('click', async () => {
+        <div class="d-flex align-items-center gap-2">
+          <input class="form-check-input user-checkbox flex-shrink-0" type="checkbox" value="${u.id}">
+          <div class="flex-grow-1" style="cursor:pointer;overflow:hidden">
+            <div class="d-flex flex-wrap align-items-center gap-1">
+              <strong>${u.email}</strong>
+              ${u.is_admin ? '<span class="badge bg-warning text-dark">admin</span>' : ''}
+              ${permInfo}
+            </div>
+            <small class="text-muted">
+              <i class="bi bi-box-arrow-in-right me-1"></i>${u.login_count ?? 0}×
+              &nbsp;•&nbsp;${u.last_login ? new Date(u.last_login).toLocaleString('sk') : 'nikdy'}
+            </small>
+          </div>
+        </div>`;
+      li.querySelector('.flex-grow-1').addEventListener('click', async () => {
         document.getElementById('target-user-id').value = u.id;
         if (selectedUserElement) selectedUserElement.classList.remove('active');
-        li.classList.add('active');
-        selectedUserElement = li;
+        li.classList.add('active'); selectedUserElement = li;
         await loadAdminUserVehicles(u.id);
-        window.scrollTo({ top: document.getElementById('set-permission-form').offsetTop, behavior: 'smooth' });
+        document.getElementById('set-permission-form').scrollIntoView({ behavior: 'smooth' });
       });
       list.appendChild(li);
     }
   }
 
   document.getElementById('user-list').addEventListener('change', () => {
-    const anyChecked = document.querySelectorAll('.user-checkbox:checked').length > 0;
-    document.getElementById('delete-users-btn').disabled = !anyChecked;
+    document.getElementById('delete-users-btn').disabled = !document.querySelectorAll('.user-checkbox:checked').length;
   });
 
   document.getElementById('delete-users-btn').addEventListener('click', async () => {
-    if (!confirm("Naozaj chceš zmazať vybraných používateľov?")) return;
-    const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+    if (!confirm('Naozaj chceš zmazať vybraných používateľov?')) return;
+    const ids = [...document.querySelectorAll('.user-checkbox:checked')].map(cb => cb.value);
     const res = await fetch(`${API_BASE}/admin/users`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(ids)
+      method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', body: JSON.stringify(ids)
     });
-    if (res.ok) {
-      alert("Používatelia boli zmazaní");
-      loadUserList();
-    } else {
-      alert("Chyba pri mazaní");
-    }
+    if (res.ok) { showToast(`Zmazaných ${ids.length} používateľov`); loadUserList(); }
+    else showToast('Chyba pri mazaní', 'danger');
   });
 
-  // Načítanie vozidiel pre vybraného používateľa (admin)
+  /* ── Admin: vozidlá používateľa ── */
   async function loadAdminUserVehicles(userId) {
     const res = await fetch(API_BASE + '/admin/vehicles', { credentials: 'include' });
-    const all = await res.json();
-    const vehicles = all.filter(v => v.user_id === userId);
+    const vehicles = (await res.json()).filter(v => v.user_id === userId);
     const container = document.getElementById('admin-vehicle-list');
-    container.innerHTML = `<h5>Značky používateľa</h5><ul class="list-group"></ul>`;
+    container.innerHTML = `<h6 class="fw-bold mb-2"><i class="bi bi-car-front me-1"></i>Vozidlá používateľa</h6><ul class="list-group list-group-flush"></ul>`;
     const ul = container.querySelector('ul');
-    vehicles.forEach(v => {
+    if (!vehicles.length) { ul.innerHTML = '<li class="list-group-item text-muted ps-0">Žiadne vozidlá</li>'; }
+    else vehicles.forEach(v => {
       const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `
-        <span>${v.spz}</span>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${v.id}', '${userId}')">🗑</button>
-      `;
+      li.className = 'list-group-item d-flex justify-content-between align-items-center ps-0';
+      li.innerHTML = `<span><i class="bi bi-car-front me-2 text-muted"></i><strong>${v.spz}</strong></span>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteVehicle('${v.id}','${userId}')"><i class="bi bi-trash"></i></button>`;
       ul.appendChild(li);
     });
-    document.getElementById("admin-add-vehicle-form").style.display = "block";
+    document.getElementById('admin-add-vehicle-form').style.display = 'block';
   }
 
-  // Odoslanie novej ŠPZ ako admin
-  document.getElementById("admin-add-vehicle-form").addEventListener("submit", async e => {
+  document.getElementById('admin-add-vehicle-form').addEventListener('submit', async e => {
     e.preventDefault();
-    const spz = document.getElementById("admin-new-spz").value;
-    const userId = document.getElementById("target-user-id").value;
+    const userId = document.getElementById('target-user-id').value;
+    if (!userId) { showToast('Najprv vyber používateľa zo zoznamu', 'warning'); return; }
+    const spz = document.getElementById('admin-new-spz').value;
     const res = await fetch(`${API_BASE}/admin/vehicles/${userId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: 'include',
-      body: JSON.stringify({ spz })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', body: JSON.stringify({ spz })
     });
-    if (res.ok) {
-      document.getElementById("admin-new-spz").value = "";
-      await loadAdminUserVehicles(userId);
-    } else {
-      alert("Nepodarilo sa pridať ŠPZ.");
-    }
+    if (res.ok) { document.getElementById('admin-new-spz').value = ''; await loadAdminUserVehicles(userId); showToast('ŠPZ pridaná'); }
+    else { const err = await res.json(); showToast(err.detail || 'Nepodarilo sa pridať ŠPZ', 'danger'); }
   });
 
-  // Mazanie ŠPZ
   async function deleteVehicle(vehicleId, userId) {
-    if (!confirm("Naozaj chceš zmazať túto ŠPZ?")) return;
-    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    if (res.ok) {
-      await loadAdminUserVehicles(userId);
-    } else {
-      alert("Nepodarilo sa zmazať vozidlo.");
-    }
+    if (!confirm('Naozaj chceš zmazať túto ŠPZ?')) return;
+    const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, { method: 'DELETE', credentials: 'include' });
+    if (res.ok) { await loadAdminUserVehicles(userId); showToast('ŠPZ zmazaná'); }
+    else showToast('Nepodarilo sa zmazať', 'danger');
   }
 
-  // Pridanie ŠPZ používateľom
-  document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const spz = document.getElementById('spz').value;
-    const res = await fetch(API_BASE + '/vehicles', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ spz })
-    });
-    if (res.ok) {
-      document.getElementById('spz').value = '';
-      loadVehicles();
-    } else {
-      alert('Chyba pri pridávaní vozidla');
-    }
-  });
-
-  // Nastavenie povolenia pre používateľa (admin)
+  /* ── Admin: povolenie ── */
   document.getElementById('set-permission-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const userId = document.getElementById('target-user-id').value;
-    const entries = document.getElementById('daily-entries').value;
-    const timeWindow = document.getElementById('time-window').value;
+    if (!userId) { showToast('Najprv vyber používateľa zo zoznamu', 'warning'); return; }
     const res = await fetch(`${API_BASE}/admin/permissions/${userId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ daily_entries: parseInt(entries), time_window: timeWindow })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ daily_entries: parseInt(document.getElementById('daily-entries').value), time_window: document.getElementById('time-window').value })
     });
-    if (res.ok) {
-      alert('Povolenie nastavené');
-      document.getElementById('target-user-id').value = '';
-      document.getElementById('daily-entries').value = '';
-      document.getElementById('time-window').value = '';
-      loadUserList();
-    } else {
-      alert('Chyba pri nastavovaní povolenia');
-    }
+    if (res.ok) { showToast('Povolenie nastavené'); e.target.reset(); loadUserList(); }
+    else showToast('Chyba pri nastavovaní povolenia', 'danger');
   });
 
-  // Export CSV
+  /* ── Export CSV ── */
   document.getElementById('export-btn').addEventListener('click', async () => {
     const res = await fetch(`${API_BASE}/admin/export`, { credentials: 'include' });
     if (res.ok) {
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'export.csv';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } else {
-      alert('Nepodarilo sa exportovať dáta.');
-    }
+      const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(await res.blob()), download: 'export.csv' });
+      a.click(); URL.revokeObjectURL(a.href); showToast('Export stiahnutý');
+    } else showToast('Nepodarilo sa exportovať', 'danger');
   });
 
-  // Odhlásenie
-  document.getElementById('logout').addEventListener('click', async () => {
-    await fetch(API_BASE + '/logout', { method: 'POST', credentials: 'include' });
-    location.reload();
-  });
-
-  // Vytvorenie používateľa (admin)
+  /* ── Vytvorenie používateľa (admin) ── */
   document.getElementById('admin-create-user-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('new-user-email').value;
-    const password = document.getElementById('new-user-password').value;
-    const isAdmin = document.getElementById('new-user-is-admin').checked;
-    const res = await fetch(`${API_BASE}/admin/users?is_admin=${isAdmin}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ email, password })
+    const res = await fetch(`${API_BASE}/admin/users?is_admin=${document.getElementById('new-user-is-admin').checked}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
+      body: JSON.stringify({ email: document.getElementById('new-user-email').value, password: document.getElementById('new-user-password').value })
     });
-    if (res.ok) {
-      alert("Používateľ vytvorený");
-      document.getElementById('admin-create-user-form').reset();
-      loadUserList();
-    } else {
-      const err = await res.json();
-      alert("Chyba: " + err.detail);
-    }
+    if (res.ok) { showToast('Používateľ vytvorený'); e.target.reset(); loadUserList(); }
+    else { const err = await res.json(); showToast(err.detail || 'Chyba', 'danger'); }
   });
 
-  // Import používateľov
-  document.getElementById("import-btn").addEventListener("click", async () => {
-    const raw = document.getElementById("import-data").value.trim();
+  /* ── Import ── */
+  document.getElementById('import-btn').addEventListener('click', async () => {
+    const raw = document.getElementById('import-data').value.trim();
     if (!raw) return;
-    const lines = raw.split("\n").map(line => line.split(","));
     const res = await fetch(`${API_BASE}/admin/import`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: 'include',
-      body: JSON.stringify(lines)
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', body: JSON.stringify(raw.split('\n').map(l => l.split(',')))
     });
-    if (res.ok) {
-      alert("Import úspešný");
-      document.getElementById("import-data").value = "";
-      loadUserList();
-    } else {
-      alert("Chyba pri importe");
-    }
+    if (res.ok) { const d = await res.json(); showToast(d.message); document.getElementById('import-data').value = ''; loadUserList(); }
+    else showToast('Chyba pri importe', 'danger');
   });
-
-  // Zmena hesla
-  document.getElementById("change-password-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const old_password = document.getElementById("old-password").value;
-    const new_password = document.getElementById("new-password").value;
-    const res = await fetch(`${API_BASE}/change-password`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: 'include',
-      body: JSON.stringify({ old_password, new_password })
-    });
-    if (res.ok) {
-      alert("Heslo úspešne zmenené");
-      document.getElementById("change-password-form").reset();
-    } else {
-      const err = await res.json();
-      alert("Chyba: " + err.detail);
-    }
-  });
-
 </script>
 </body>
 </html>
-  
