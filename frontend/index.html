@@ -176,6 +176,12 @@
               </div>
               <div class="mb-3">
                 <input type="password" class="form-control" id="new-password" data-i18n-placeholder="placeholder-new-password" placeholder="Nové heslo (min. 8 znakov)" required>
+                <div id="pw-strength" class="mt-2" style="display:none;">
+                  <div class="progress mb-1" style="height:4px;">
+                    <div id="pw-strength-bar" class="progress-bar" style="width:0%;transition:width .3s,background-color .3s"></div>
+                  </div>
+                  <small id="pw-strength-label" class="text-muted"></small>
+                </div>
               </div>
               <button type="submit" class="btn btn-outline-secondary w-100">
                 <i class="bi bi-arrow-repeat me-1"></i><span data-i18n="btn-change-password">Zmeniť heslo</span>
@@ -222,7 +228,10 @@
             <!-- Zoznam používateľov -->
             <div class="col-lg-7">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold mb-0"><i class="bi bi-people me-1"></i><span data-i18n="admin-users">Používatelia</span></h6>
+                <h6 class="fw-bold mb-0">
+                  <input class="form-check-input me-1" type="checkbox" id="select-all-users" title="Vybrať všetkých">
+                  <i class="bi bi-people me-1"></i><span data-i18n="admin-users">Používatelia</span>
+                </h6>
                 <div class="d-flex gap-2">
                   <button id="delete-users-btn" class="btn btn-danger btn-sm" disabled>
                     <i class="bi bi-trash me-1"></i><span data-i18n="btn-delete">Zmazať</span>
@@ -356,6 +365,10 @@
       'vehicle-spz-delete-err': 'Nepodarilo sa zmazať',
       'never': 'nikdy',
       'date-locale': 'sk',
+      'pw-weak': 'Slabé',
+      'pw-fair': 'Primerané',
+      'pw-good': 'Dobré',
+      'pw-strong': 'Silné',
     },
     en: {
       'page-title': 'Licence Plate Registration',
@@ -423,6 +436,10 @@
       'vehicle-spz-delete-err': 'Failed to remove',
       'never': 'never',
       'date-locale': 'en-GB',
+      'pw-weak': 'Weak',
+      'pw-fair': 'Fair',
+      'pw-good': 'Good',
+      'pw-strong': 'Strong',
     }
   };
 
@@ -459,6 +476,11 @@
   }
 
   applyTranslations();
+
+  /* ── Loading spinner ── */
+  function spinner() {
+    return '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-secondary"></div></div>';
+  }
 
   /* ── Toast notifikácie ── */
   function showToast(message, type = 'success') {
@@ -528,9 +550,10 @@
 
   /* ── Vozidlá ── */
   async function loadVehicles() {
+    const list = document.getElementById('vehicle-list');
+    list.innerHTML = `<li class="list-group-item">${spinner()}</li>`;
     const res = await fetch(API_BASE + '/vehicles', { credentials: 'include' });
     const vehicles = await res.json();
-    const list = document.getElementById('vehicle-list');
     list.innerHTML = '';
     if (!vehicles.length) {
       list.innerHTML = `<li class="list-group-item text-muted py-3"><i class="bi bi-info-circle me-1"></i>${t('no-vehicles')}</li>`;
@@ -565,6 +588,7 @@
 
   /* ── Povolenie ── */
   async function loadPermission() {
+    document.getElementById('permission-info').innerHTML = spinner();
     const res = await fetch(API_BASE + '/permissions', { credentials: 'include' });
     if (res.ok) {
       const perm = await res.json();
@@ -582,6 +606,33 @@
     }
   }
 
+  /* ── Sila hesla ── */
+  const pwStrengthLevels = [
+    { key: 'pw-weak',  color: '#dc3545', width: '25%' },
+    { key: 'pw-fair',  color: '#fd7e14', width: '50%' },
+    { key: 'pw-good',  color: '#0dcaf0', width: '75%' },
+    { key: 'pw-strong',color: '#198754', width: '100%' },
+  ];
+
+  document.getElementById('new-password').addEventListener('input', (e) => {
+    const pw = e.target.value;
+    const bar = document.getElementById('pw-strength-bar');
+    const label = document.getElementById('pw-strength-label');
+    const wrap = document.getElementById('pw-strength');
+    if (!pw) { wrap.style.display = 'none'; return; }
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (pw.length >= 12) score++;
+    const level = pwStrengthLevels[Math.max(0, score - 1)];
+    bar.style.width = pw.length < 8 ? '10%' : level.width;
+    bar.style.backgroundColor = pw.length < 8 ? '#dc3545' : level.color;
+    label.textContent = pw.length < 8 ? `${t('pw-weak')} – min. 8` : t(level.key);
+    label.style.color = pw.length < 8 ? '#dc3545' : level.color;
+    wrap.style.display = 'block';
+  });
+
   /* ── Zmena hesla ── */
   document.getElementById('change-password-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -598,9 +649,10 @@
   document.getElementById('search-users').addEventListener('input', debounce(() => loadUserList(document.getElementById('search-users').value), 300));
 
   async function loadUserList(filter = '') {
+    const list = document.getElementById('user-list');
+    list.innerHTML = spinner();
     const res = await fetch(API_BASE + '/admin/users', { credentials: 'include' });
     const users = await res.json();
-    const list = document.getElementById('user-list');
     list.innerHTML = '';
     for (const u of users) {
       if (!u.email.toLowerCase().includes(filter.toLowerCase())) continue;
@@ -639,7 +691,16 @@
   }
 
   document.getElementById('user-list').addEventListener('change', () => {
-    document.getElementById('delete-users-btn').disabled = !document.querySelectorAll('.user-checkbox:checked').length;
+    const checked = document.querySelectorAll('.user-checkbox:checked').length;
+    const total = document.querySelectorAll('.user-checkbox').length;
+    document.getElementById('delete-users-btn').disabled = !checked;
+    document.getElementById('select-all-users').indeterminate = checked > 0 && checked < total;
+    document.getElementById('select-all-users').checked = checked === total && total > 0;
+  });
+
+  document.getElementById('select-all-users').addEventListener('change', (e) => {
+    document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = e.target.checked);
+    document.getElementById('delete-users-btn').disabled = !e.target.checked;
   });
 
   document.getElementById('delete-users-btn').addEventListener('click', async () => {
