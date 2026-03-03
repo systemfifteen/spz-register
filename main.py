@@ -1,25 +1,42 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Body
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, Body, Request, Response, Cookie
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from passlib.context import CryptContext
-from sqlmodel import SQLModel, Field, Session, create_engine, select, delete, Column, DateTime, Integer
+from sqlmodel import SQLModel, Field, Session, create_engine, select, delete
 from typing import List, Optional
 from uuid import uuid4
 from io import StringIO
-from datetime import datetime
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import csv
+import re
 
 
-app = FastAPI()
+limiter = Limiter(key_func=get_remote_address)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    SQLModel.metadata.create_all(engine)
+    yield
+
+app = FastAPI(lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "https://spz.poetika.online").split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,13 +46,20 @@ sqlite_file_name = "data/db.sqlite"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 engine = create_engine(sqlite_url, echo=False)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-tokens = {}
+
+SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 8
+
+def create_access_token(user_id: str) -> str:
+    expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    return jwt.encode({"sub": user_id, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
 
 class User(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()), primary_key=True)
-    email: str
+    email: str = Field(unique=True)
     hashed_password: str
     is_admin: bool = False
     login_count: int = 0
@@ -45,6 +69,21 @@ class UserCreate(BaseModel):
     email: str
     password: str
 
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v: str) -> str:
+        v = v.strip().lower()
+        if '@' not in v or '.' not in v.split('@')[-1]:
+            raise ValueError('Neplatný formát emailu')
+        return v
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        if len(v) < 8:
+            raise ValueError('Heslo musí mať aspoň 8 znakov')
+        return v
+
 class Vehicle(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()), primary_key=True)
     user_id: str
@@ -52,6 +91,14 @@ class Vehicle(SQLModel, table=True):
 
 class VehicleCreate(BaseModel):
     spz: str
+
+    @field_validator('spz')
+    @classmethod
+    def validate_spz(cls, v: str) -> str:
+        v = v.upper().strip().replace(' ', '').replace('-', '')
+        if not re.match(r'^[A-Z]{2}\d{3}[A-Z]{2}$', v):
+            raise ValueError('Neplatný formát ŠPZ (očakávaný formát: BA123AB)')
+        return v
 
 class Permission(SQLModel, table=True):
     user_id: str = Field(primary_key=True)
@@ -66,9 +113,19 @@ class PasswordChange(BaseModel):
     old_password: str
     new_password: str
 
-def get_user_by_token(token: str = Depends(oauth2_scheme)) -> User:
-    user_id = tokens.get(token)
-    if not user_id:
+def get_user_by_token(
+    access_token: Optional[str] = Cookie(default=None),
+    bearer_token: Optional[str] = Depends(oauth2_scheme),
+) -> User:
+    token = access_token or bearer_token
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
     with Session(engine) as session:
         user = session.get(User, user_id)
@@ -76,9 +133,10 @@ def get_user_by_token(token: str = Depends(oauth2_scheme)) -> User:
             raise HTTPException(status_code=401, detail="User not found")
         return user
 
-@app.on_event("startup")
-def on_startup():
-    SQLModel.metadata.create_all(engine)
+def require_admin(user: User = Depends(get_user_by_token)) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Admins only")
+    return user
 
 @app.post("/register")
 def register(user: UserCreate):
@@ -93,7 +151,8 @@ def register(user: UserCreate):
         return {"message": "User registered"}
 
 @app.post("/token")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("5/minute")
+def login(request: Request, response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == form_data.username)).first()
         if not user or not pwd_context.verify(form_data.password, user.hashed_password):
@@ -105,13 +164,25 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         session.add(user)
         session.commit()
 
-        token = str(uuid4())
-        tokens[token] = user.id
-        return {"access_token": token, "token_type": "bearer"}
+        token = create_access_token(user.id)
+        response.set_cookie(
+            key="access_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        )
+        return {"message": "Prihlásenie úspešné"}
 
 @app.get("/me")
 def get_me(user: User = Depends(get_user_by_token)):
     return user
+
+@app.post("/logout")
+def logout(response: Response, user: User = Depends(get_user_by_token)):
+    response.delete_cookie("access_token")
+    return {"message": "Odhlásenie úspešné"}
 
 @app.post("/vehicles")
 def add_vehicle(vehicle: VehicleCreate, user: User = Depends(get_user_by_token)):
@@ -139,16 +210,12 @@ def delete_vehicle(vehicle_id: str, user: User = Depends(get_user_by_token)):
         return {"message": "Deleted"}
 
 @app.get("/admin/vehicles")
-def list_all_vehicles(user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def list_all_vehicles(user: User = Depends(require_admin)):
     with Session(engine) as session:
         return session.exec(select(Vehicle)).all()
 
 @app.post("/admin/permissions/{user_id}")
-def set_permission(user_id: str, data: PermissionUpdate, user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def set_permission(user_id: str, data: PermissionUpdate, user: User = Depends(require_admin)):
     with Session(engine) as session:
         perm = session.get(Permission, user_id)
         if perm:
@@ -170,9 +237,7 @@ def get_permission(user: User = Depends(get_user_by_token)):
         return perm
 
 @app.get("/admin/permissions/{user_id}")
-def get_permission_for_user(user_id: str, user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def get_permission_for_user(user_id: str, user: User = Depends(require_admin)):
     with Session(engine) as session:
         perm = session.get(Permission, user_id)
         if not perm:
@@ -180,16 +245,12 @@ def get_permission_for_user(user_id: str, user: User = Depends(get_user_by_token
         return perm
 
 @app.get("/admin/users")
-def list_users(user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def list_users(user: User = Depends(require_admin)):
     with Session(engine) as session:
         return session.exec(select(User)).all()
 
 @app.post("/admin/vehicles/{user_id}")
-def add_vehicle_admin(user_id: str, vehicle: VehicleCreate, user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def add_vehicle_admin(user_id: str, vehicle: VehicleCreate, user: User = Depends(require_admin)):
     with Session(engine) as session:
         new_vehicle = Vehicle(user_id=user_id, spz=vehicle.spz)
         session.add(new_vehicle)
@@ -197,9 +258,7 @@ def add_vehicle_admin(user_id: str, vehicle: VehicleCreate, user: User = Depends
         return new_vehicle
 
 @app.get("/admin/export")
-def export_csv(user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def export_csv(user: User = Depends(require_admin)):
 
     output = StringIO()
     writer = csv.writer(output)
@@ -235,9 +294,7 @@ def export_csv(user: User = Depends(get_user_by_token)):
     })
 
 @app.post("/admin/users")
-def admin_create_user(data: UserCreate, is_admin: Optional[bool] = False, user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def admin_create_user(data: UserCreate, is_admin: Optional[bool] = False, user: User = Depends(require_admin)):
 
     with Session(engine) as session:
         existing = session.exec(select(User).where(User.email == data.email)).first()
@@ -254,9 +311,7 @@ def admin_create_user(data: UserCreate, is_admin: Optional[bool] = False, user: 
         return {"message": "Používateľ vytvorený", "user_id": new_user.id}
 
 @app.delete("/admin/users")
-def delete_users(user_ids: List[str] = Body(...), user: User = Depends(get_user_by_token)):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
+def delete_users(user_ids: List[str] = Body(...), user: User = Depends(require_admin)):
     
     with Session(engine) as session:
         for uid in user_ids:
@@ -270,10 +325,8 @@ def delete_users(user_ids: List[str] = Body(...), user: User = Depends(get_user_
 @app.post("/admin/import")
 def import_users(
     data: List[List[str]] = Body(...),
-    user: User = Depends(get_user_by_token)
+    user: User = Depends(require_admin)
 ):
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Admins only")
 
     created = []
     with Session(engine) as session:

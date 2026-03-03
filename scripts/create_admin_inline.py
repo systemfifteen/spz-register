@@ -26,7 +26,7 @@ class User(SQLModel, table=True):
     hashed_password: str
     is_admin: bool = False
     login_count: int = 0
-    last_login_at: Optional[datetime] = None
+    last_login: Optional[datetime] = None
 
 # Cesta k databáze
 sqlite_file_name = "data/db.sqlite"
@@ -55,7 +55,7 @@ with Session(engine) as session:
             hashed_password=get_password_hash(password),
             is_admin=True,
             login_count=0,
-            last_login_at=None
+            last_login=None
         )
         session.add(new_user)
         session.commit()
