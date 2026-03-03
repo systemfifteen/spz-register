@@ -9,6 +9,11 @@ services:
       - ./data:/app/data
     environment:
       - ALLOWED_ORIGINS=https://spz.poetika.online
+      - SMTP_HOST=
+      - SMTP_PORT=587
+      - SMTP_USER=
+      - SMTP_PASSWORD=
+      - SMTP_FROM=
     mem_limit: 256m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

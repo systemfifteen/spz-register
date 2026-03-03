@@ -19,6 +19,10 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import csv
 import re
+import secrets
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 limiter = Limiter(key_func=get_remote_address)
@@ -55,6 +59,12 @@ ACCESS_TOKEN_EXPIRE_HOURS = 8
 
 if SECRET_KEY == "change-me-in-production":
     raise RuntimeError("SECRET_KEY nie je nastavený! Nastav ho cez environment premennú.")
+
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM = os.getenv("SMTP_FROM") or SMTP_USER
 
 def create_access_token(user_id: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
@@ -125,6 +135,18 @@ class PermissionUpdate(BaseModel):
 
 class PasswordChange(BaseModel):
     old_password: str
+    new_password: str
+
+class PasswordResetToken(SQLModel, table=True):
+    token: str = Field(primary_key=True)
+    user_id: str
+    expires_at: datetime
+
+class PasswordResetRequest(BaseModel):
+    email: str
+
+class PasswordResetConfirm(BaseModel):
+    token: str
     new_password: str
 
 def get_user_by_token(
@@ -380,6 +402,83 @@ def import_users(
             created.append(email)
         session.commit()
     return {"message": f"Importovaných {len(created)} používateľov", "invalid": invalid}
+
+def send_reset_email(to_email: str, token: str):
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        raise HTTPException(status_code=503, detail="Email nie je nakonfigurovaný")
+    reset_url = f"{ALLOWED_ORIGINS[0]}/?token={token}"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Reset hesla – SPZ Register"
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+    text = f"Odkaz na reset hesla:\n{reset_url}\n\nOdkaz je platný 1 hodinu."
+    html = (
+        f"<p>Požiadali ste o reset hesla.</p>"
+        f'<p><a href="{reset_url}">Kliknite sem pre reset hesla</a></p>'
+        f"<p>Alebo skopírujte odkaz: {reset_url}</p>"
+        f"<p><small>Odkaz je platný 1 hodinu. "
+        f"Ak ste o reset nepožiadali, ignorujte tento email.</small></p>"
+    )
+    msg.attach(MIMEText(text, "plain"))
+    msg.attach(MIMEText(html, "html"))
+    if SMTP_PORT == 465:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+
+
+@app.post("/forgot-password")
+@limiter.limit("3/minute")
+def forgot_password(request: Request, data: PasswordResetRequest):
+    with Session(engine) as session:
+        user = session.exec(select(User).where(User.email == data.email.strip().lower())).first()
+        if user:
+            session.exec(delete(PasswordResetToken).where(PasswordResetToken.user_id == user.id))
+            token = secrets.token_urlsafe(32)
+            reset_token = PasswordResetToken(
+                token=token,
+                user_id=user.id,
+                expires_at=datetime.utcnow() + timedelta(hours=1),
+            )
+            session.add(reset_token)
+            session.commit()
+            try:
+                send_reset_email(user.email, token)
+            except HTTPException:
+                raise
+            except Exception:
+                raise HTTPException(status_code=503, detail="Nepodarilo sa odoslať email")
+    return {"message": "Ak email existuje, bol odoslaný odkaz na reset hesla"}
+
+
+@app.post("/reset-password")
+def reset_password(data: PasswordResetConfirm):
+    if len(data.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Heslo musí mať aspoň 8 znakov")
+    with Session(engine) as session:
+        reset_token = session.get(PasswordResetToken, data.token)
+        if not reset_token:
+            raise HTTPException(status_code=400, detail="Neplatný alebo expirovaný token")
+        if reset_token.expires_at < datetime.utcnow():
+            session.delete(reset_token)
+            session.commit()
+            raise HTTPException(status_code=400, detail="Token expiroval")
+        user = session.get(User, reset_token.user_id)
+        if not user:
+            session.delete(reset_token)
+            session.commit()
+            raise HTTPException(status_code=400, detail="Používateľ neexistuje")
+        user.hashed_password = pwd_context.hash(data.new_password)
+        session.add(user)
+        session.delete(reset_token)
+        session.commit()
+    return {"message": "Heslo bolo úspešne zmenené"}
+
 
 @app.post("/change-password")
 def change_password(data: PasswordChange, user: User = Depends(get_user_by_token)):

@@ -76,31 +76,90 @@
       <small data-i18n="page-subtitle">Pešia zóna – Banská Bystrica</small>
     </div>
     <div class="card-body p-4">
-      <form id="login-form">
-        <div class="mb-3">
-          <label class="form-label fw-semibold" data-i18n="label-email">Email</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input type="email" class="form-control" id="email" data-i18n-placeholder="placeholder-email" placeholder="vas@email.sk" required>
+
+      <!-- Login section -->
+      <div id="login-section">
+        <form id="login-form">
+          <div class="mb-3">
+            <label class="form-label fw-semibold" data-i18n="label-email">Email</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              <input type="email" class="form-control" id="email" data-i18n-placeholder="placeholder-email" placeholder="vas@email.sk" required>
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold" data-i18n="label-password">Heslo</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-bb w-100 py-2 mb-2" id="login-btn">
+            <i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login-btn">Prihlásiť sa</span>
+          </button>
+        </form>
+        <div class="text-center mb-1">
+          <a href="#forgot-section" data-bs-toggle="collapse" class="small text-muted text-decoration-none" data-i18n="forgot-password">Zabudnuté heslo?</a>
+        </div>
+        <div class="collapse" id="forgot-section">
+          <hr class="my-2">
+          <form id="forgot-password-form">
+            <div class="mb-2">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" id="forgot-email" data-i18n-placeholder="placeholder-forgot-email" placeholder="Váš registrovaný email" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-outline-secondary w-100" id="forgot-btn">
+              <i class="bi bi-send me-1"></i><span data-i18n="btn-send-reset">Odoslať odkaz</span>
+            </button>
+          </form>
+        </div>
+        <div class="text-center mt-3">
+          <div class="btn-group lang-switch" role="group">
+            <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="sk" onclick="setLang('sk')">SK</button>
+            <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
           </div>
         </div>
-        <div class="mb-4">
-          <label class="form-label fw-semibold" data-i18n="label-password">Heslo</label>
-          <div class="input-group">
-            <span class="input-group-text"><i class="bi bi-lock"></i></span>
-            <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+      </div>
+
+      <!-- Reset password section -->
+      <div id="reset-section" style="display:none;">
+        <h6 class="text-center fw-bold mb-3" style="color:var(--bb-primary);" data-i18n="reset-title">Nastavenie nového hesla</h6>
+        <form id="reset-password-form">
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="reset-new-password" data-i18n-placeholder="placeholder-reset-new-password" placeholder="Nové heslo (min. 8 znakov)" required>
+            </div>
+            <div id="reset-pw-strength" class="mt-2" style="display:none;">
+              <div class="progress mb-1" style="height:4px;">
+                <div id="reset-pw-strength-bar" class="progress-bar" style="width:0%;transition:width .3s,background-color .3s"></div>
+              </div>
+              <small id="reset-pw-strength-label" class="text-muted"></small>
+            </div>
           </div>
+          <div class="mb-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" class="form-control" id="reset-confirm-password" data-i18n-placeholder="placeholder-reset-confirm-password" placeholder="Potvrdiť nové heslo" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-bb w-100 py-2 mb-2" id="reset-btn">
+            <i class="bi bi-check-lg me-1"></i><span data-i18n="btn-reset-password">Nastaviť heslo</span>
+          </button>
+        </form>
+        <div class="text-center mb-3">
+          <a href="#" class="small text-muted text-decoration-none" onclick="showLoginSection(); return false;" data-i18n="back-to-login">Späť na prihlásenie</a>
         </div>
-        <button type="submit" class="btn btn-bb w-100 py-2 mb-3" id="login-btn">
-          <i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login-btn">Prihlásiť sa</span>
-        </button>
         <div class="text-center">
           <div class="btn-group lang-switch" role="group">
             <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="sk" onclick="setLang('sk')">SK</button>
             <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
           </div>
         </div>
-      </form>
+      </div>
+
     </div>
   </div>
 </div>
@@ -296,6 +355,7 @@
   const API_BASE = window.location.origin;
   let selectedUserElement = null;
   let currentUser = null;
+  let pendingResetToken = new URLSearchParams(window.location.search).get('token');
 
   /* ══════════════ i18n ══════════════ */
   const translations = {
@@ -369,6 +429,20 @@
       'pw-fair': 'Primerané',
       'pw-good': 'Dobré',
       'pw-strong': 'Silné',
+      'forgot-password': 'Zabudnuté heslo?',
+      'placeholder-forgot-email': 'Váš registrovaný email',
+      'btn-send-reset': 'Odoslať odkaz',
+      'sending-reset': 'Odosielam...',
+      'forgot-sent': 'Ak email existuje, bol odoslaný odkaz na reset hesla',
+      'reset-title': 'Nastavenie nového hesla',
+      'placeholder-reset-new-password': 'Nové heslo (min. 8 znakov)',
+      'placeholder-reset-confirm-password': 'Potvrdiť nové heslo',
+      'btn-reset-password': 'Nastaviť heslo',
+      'resetting-password': 'Nastavujem...',
+      'reset-success': 'Heslo bolo úspešne zmenené',
+      'reset-error': 'Neplatný alebo expirovaný odkaz',
+      'reset-password-mismatch': 'Heslá sa nezhodujú',
+      'back-to-login': 'Späť na prihlásenie',
     },
     en: {
       'page-title': 'Licence Plate Registration',
@@ -440,6 +514,20 @@
       'pw-fair': 'Fair',
       'pw-good': 'Good',
       'pw-strong': 'Strong',
+      'forgot-password': 'Forgot password?',
+      'placeholder-forgot-email': 'Your registered email',
+      'btn-send-reset': 'Send reset link',
+      'sending-reset': 'Sending...',
+      'forgot-sent': 'If the email exists, a reset link has been sent',
+      'reset-title': 'Set new password',
+      'placeholder-reset-new-password': 'New password (min. 8 characters)',
+      'placeholder-reset-confirm-password': 'Confirm new password',
+      'btn-reset-password': 'Set password',
+      'resetting-password': 'Setting...',
+      'reset-success': 'Password has been changed successfully',
+      'reset-error': 'Invalid or expired link',
+      'reset-password-mismatch': 'Passwords do not match',
+      'back-to-login': 'Back to sign in',
     }
   };
 
@@ -501,7 +589,20 @@
   }
 
   /* ── Auth check pri načítaní ── */
+  function showResetSection() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('reset-section').style.display = 'block';
+  }
+
+  function showLoginSection() {
+    pendingResetToken = null;
+    history.replaceState(null, '', '/');
+    document.getElementById('reset-section').style.display = 'none';
+    document.getElementById('login-section').style.display = '';
+  }
+
   async function checkAuth() {
+    if (pendingResetToken) { showResetSection(); return; }
     const res = await fetch(API_BASE + '/me', { credentials: 'include' });
     if (res.ok) showApp(await res.json());
   }
@@ -642,6 +743,61 @@
     });
     if (res.ok) { showToast(t('password-changed')); e.target.reset(); }
     else { const err = await res.json(); showToast(err.detail || t('general-err'), 'danger'); }
+  });
+
+  /* ── Zabudnuté heslo ── */
+  document.getElementById('forgot-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('forgot-btn');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${t('sending-reset')}`;
+    await fetch(API_BASE + '/forgot-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: document.getElementById('forgot-email').value })
+    });
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-send me-1"></i><span>${t('btn-send-reset')}</span>`;
+    showToast(t('forgot-sent'));
+    e.target.reset();
+    bootstrap.Collapse.getOrCreateInstance(document.getElementById('forgot-section')).hide();
+  });
+
+  /* ── Reset hesla ── */
+  document.getElementById('reset-new-password').addEventListener('input', (e) => {
+    const pw = e.target.value;
+    const bar = document.getElementById('reset-pw-strength-bar');
+    const label = document.getElementById('reset-pw-strength-label');
+    const wrap = document.getElementById('reset-pw-strength');
+    if (!pw) { wrap.style.display = 'none'; return; }
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    if (pw.length >= 12) score++;
+    const level = pwStrengthLevels[Math.max(0, score - 1)];
+    bar.style.width = pw.length < 8 ? '10%' : level.width;
+    bar.style.backgroundColor = pw.length < 8 ? '#dc3545' : level.color;
+    label.textContent = pw.length < 8 ? `${t('pw-weak')} – min. 8` : t(level.key);
+    label.style.color = pw.length < 8 ? '#dc3545' : level.color;
+    wrap.style.display = 'block';
+  });
+
+  document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPw = document.getElementById('reset-new-password').value;
+    const confirmPw = document.getElementById('reset-confirm-password').value;
+    if (newPw !== confirmPw) { showToast(t('reset-password-mismatch'), 'danger'); return; }
+    const btn = document.getElementById('reset-btn');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${t('resetting-password')}`;
+    const res = await fetch(API_BASE + '/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: pendingResetToken, new_password: newPw })
+    });
+    btn.disabled = false;
+    btn.innerHTML = `<i class="bi bi-check-lg me-1"></i><span>${t('btn-reset-password')}</span>`;
+    if (res.ok) { showToast(t('reset-success')); showLoginSection(); }
+    else { const err = await res.json(); showToast(err.detail || t('reset-error'), 'danger'); }
   });
 
   /* ── Admin: zoznam používateľov ── */
