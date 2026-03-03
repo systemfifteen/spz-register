@@ -75,6 +75,10 @@ class UserPublic(BaseModel):
     login_count: int
     last_login: Optional[datetime]
 
+class UserWithPermission(UserPublic):
+    daily_entries: Optional[int] = None
+    time_window: Optional[str] = None
+
 class UserCreate(BaseModel):
     email: str
     password: str
@@ -255,10 +259,18 @@ def get_permission_for_user(user_id: str, user: User = Depends(require_admin)):
             raise HTTPException(status_code=404, detail="Permission not set")
         return perm
 
-@app.get("/admin/users", response_model=List[UserPublic])
+@app.get("/admin/users", response_model=List[UserWithPermission])
 def list_users(user: User = Depends(require_admin)):
     with Session(engine) as session:
-        return session.exec(select(User)).all()
+        users = session.exec(select(User)).all()
+        permissions = {p.user_id: p for p in session.exec(select(Permission)).all()}
+        return [
+            UserWithPermission(**u.model_dump(), **({
+                "daily_entries": p.daily_entries,
+                "time_window": p.time_window,
+            } if (p := permissions.get(u.id)) else {}))
+            for u in users
+        ]
 
 @app.post("/admin/vehicles/{user_id}")
 def add_vehicle_admin(user_id: str, vehicle: VehicleCreate, user: User = Depends(require_admin)):
@@ -340,12 +352,21 @@ def import_users(
 ):
 
     created = []
+    invalid = []
     with Session(engine) as session:
         for row in data:
             if len(row) < 2:
                 continue
-            email, password = row[0].strip(), row[1].strip()
+            email = row[0].strip().lower()
+            password = row[1].strip()
             is_admin = row[2].strip().lower() == "true" if len(row) > 2 else False
+
+            if '@' not in email or '.' not in email.split('@')[-1]:
+                invalid.append(email)
+                continue
+            if len(password) < 8:
+                invalid.append(email)
+                continue
 
             exists = session.exec(select(User).where(User.email == email)).first()
             if exists:
@@ -358,7 +379,7 @@ def import_users(
             session.add(new_user)
             created.append(email)
         session.commit()
-    return {"message": f"Importovaných {len(created)} používateľov"}
+    return {"message": f"Importovaných {len(created)} používateľov", "invalid": invalid}
 
 @app.post("/change-password")
 def change_password(data: PasswordChange, user: User = Depends(get_user_by_token)):

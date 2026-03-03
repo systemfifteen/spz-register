@@ -604,11 +604,9 @@
     list.innerHTML = '';
     for (const u of users) {
       if (!u.email.toLowerCase().includes(filter.toLowerCase())) continue;
-      let permInfo = '';
-      try {
-        const p = await fetch(`${API_BASE}/admin/permissions/${u.id}`, { credentials: 'include' });
-        if (p.ok) { const pd = await p.json(); permInfo = `<span class="badge bg-success-subtle text-success">${pd.daily_entries}× • ${pd.time_window}</span>`; }
-      } catch {}
+      const permInfo = u.daily_entries != null
+        ? `<span class="badge bg-success-subtle text-success">${u.daily_entries}× • ${u.time_window}</span>`
+        : '';
       const li = document.createElement('li');
       li.className = 'list-group-item list-group-item-action';
       const lastLogin = u.last_login
