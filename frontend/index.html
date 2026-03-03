@@ -44,6 +44,10 @@
     .btn-accent { background: var(--bb-accent); border-color: var(--bb-accent); color: #fff; }
     .btn-accent:hover { background: #a8761e; border-color: #a8761e; color: #fff; }
 
+    /* ── Language toggle ── */
+    .lang-switch .btn { padding: .15rem .45rem; font-size: .75rem; font-weight: 600; }
+    .lang-switch .btn.active { background: rgba(255,255,255,.25); }
+
     /* ── List group tweaks ── */
     .list-group-item { border-left: none; border-right: none; }
     .list-group-item:first-child { border-top: none; }
@@ -68,28 +72,34 @@
   <div class="login-card card">
     <div class="login-header">
       <img src="/static/erb-bb.png" alt="Logo mesta Banská Bystrica" height="60" class="mb-3">
-      <h5>Registrácia ŠPZ</h5>
-      <small>Pešia zóna – Banská Bystrica</small>
+      <h5 data-i18n="page-title">Registrácia ŠPZ</h5>
+      <small data-i18n="page-subtitle">Pešia zóna – Banská Bystrica</small>
     </div>
     <div class="card-body p-4">
       <form id="login-form">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Email</label>
+          <label class="form-label fw-semibold" data-i18n="label-email">Email</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-            <input type="email" class="form-control" id="email" placeholder="vas@email.sk" required>
+            <input type="email" class="form-control" id="email" data-i18n-placeholder="placeholder-email" placeholder="vas@email.sk" required>
           </div>
         </div>
         <div class="mb-4">
-          <label class="form-label fw-semibold">Heslo</label>
+          <label class="form-label fw-semibold" data-i18n="label-password">Heslo</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-lock"></i></span>
             <input type="password" class="form-control" id="password" placeholder="••••••••" required>
           </div>
         </div>
-        <button type="submit" class="btn btn-bb w-100 py-2" id="login-btn">
-          <i class="bi bi-box-arrow-in-right me-2"></i>Prihlásiť sa
+        <button type="submit" class="btn btn-bb w-100 py-2 mb-3" id="login-btn">
+          <i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login-btn">Prihlásiť sa</span>
         </button>
+        <div class="text-center">
+          <div class="btn-group lang-switch" role="group">
+            <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="sk" onclick="setLang('sk')">SK</button>
+            <button type="button" class="btn btn-outline-secondary lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+          </div>
+        </div>
       </form>
     </div>
   </div>
@@ -103,11 +113,17 @@
     <div class="container-fluid">
       <span class="navbar-brand d-flex align-items-center gap-2">
         <img src="/static/erb-bb.png" alt="Logo mesta BB" class="city-logo" style="filter:brightness(0) invert(1);">
-        <span>Registrácia ŠPZ<br><small>Pešia zóna – Banská Bystrica</small></span>
+        <span><span data-i18n="nav-title">Registrácia ŠPZ</span><br><small data-i18n="nav-subtitle">Pešia zóna – Banská Bystrica</small></span>
       </span>
-      <button id="logout" class="btn btn-sm btn-outline-light">
-        <i class="bi bi-box-arrow-right me-1"></i>Odhlásiť
-      </button>
+      <div class="d-flex align-items-center gap-2">
+        <div class="btn-group lang-switch" role="group">
+          <button type="button" class="btn btn-sm btn-outline-light lang-btn" data-lang="sk" onclick="setLang('sk')">SK</button>
+          <button type="button" class="btn btn-sm btn-outline-light lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        </div>
+        <button id="logout" class="btn btn-sm btn-outline-light">
+          <i class="bi bi-box-arrow-right me-1"></i><span data-i18n="btn-logout">Odhlásiť</span>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -118,7 +134,7 @@
       <div class="col-md-6">
         <div class="card h-100">
           <div class="card-header-bb d-flex align-items-center gap-2">
-            <i class="bi bi-car-front-fill"></i> Vaše vozidlá
+            <i class="bi bi-car-front-fill"></i> <span data-i18n="card-vehicles">Vaše vozidlá</span>
           </div>
           <div class="card-body p-0">
             <ul id="vehicle-list" class="list-group list-group-flush"></ul>
@@ -126,9 +142,9 @@
           <div class="card-footer bg-white border-top p-3">
             <form id="add-vehicle-form">
               <div class="input-group">
-                <input type="text" class="form-control" id="spz" placeholder="Napr. BA123AB" required>
+                <input type="text" class="form-control" id="spz" data-i18n-placeholder="placeholder-spz" placeholder="Napr. BA123AB" required>
                 <button class="btn btn-success" type="submit">
-                  <i class="bi bi-plus-lg"></i> Pridať
+                  <i class="bi bi-plus-lg"></i> <span data-i18n="btn-add">Pridať</span>
                 </button>
               </div>
             </form>
@@ -140,29 +156,29 @@
       <div class="col-md-6 d-flex flex-column gap-4">
         <div class="card">
           <div class="card-header-bb d-flex align-items-center gap-2">
-            <i class="bi bi-shield-check"></i> Vaše povolenie
+            <i class="bi bi-shield-check"></i> <span data-i18n="card-permission">Vaše povolenie</span>
           </div>
           <div class="card-body">
             <div id="permission-info">
-              <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Povolenie nie je nastavené.</p>
+              <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i><span data-i18n="no-permission">Povolenie nie je nastavené.</span></p>
             </div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header-bb d-flex align-items-center gap-2">
-            <i class="bi bi-key"></i> Zmena hesla
+            <i class="bi bi-key"></i> <span data-i18n="card-change-password">Zmena hesla</span>
           </div>
           <div class="card-body">
             <form id="change-password-form">
               <div class="mb-2">
-                <input type="password" class="form-control" id="old-password" placeholder="Aktuálne heslo" required>
+                <input type="password" class="form-control" id="old-password" data-i18n-placeholder="placeholder-old-password" placeholder="Aktuálne heslo" required>
               </div>
               <div class="mb-3">
-                <input type="password" class="form-control" id="new-password" placeholder="Nové heslo (min. 8 znakov)" required>
+                <input type="password" class="form-control" id="new-password" data-i18n-placeholder="placeholder-new-password" placeholder="Nové heslo (min. 8 znakov)" required>
               </div>
               <button type="submit" class="btn btn-outline-secondary w-100">
-                <i class="bi bi-arrow-repeat me-1"></i>Zmeniť heslo
+                <i class="bi bi-arrow-repeat me-1"></i><span data-i18n="btn-change-password">Zmeniť heslo</span>
               </button>
             </form>
           </div>
@@ -174,48 +190,50 @@
     <div id="admin-panel" class="mt-4" style="display:none;">
       <div class="card admin-section">
         <div class="card-header-admin d-flex align-items-center gap-2">
-          <i class="bi bi-gear-fill"></i> Administrácia
+          <i class="bi bi-gear-fill"></i> <span data-i18n="card-admin">Administrácia</span>
         </div>
         <div class="card-body p-4">
           <div class="row g-4">
 
             <!-- Vytvoriť + Import -->
             <div class="col-lg-5">
-              <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-1"></i>Vytvoriť používateľa</h6>
+              <h6 class="fw-bold mb-3"><i class="bi bi-person-plus me-1"></i><span data-i18n="admin-create-user">Vytvoriť používateľa</span></h6>
               <form id="admin-create-user-form" class="mb-4">
-                <input type="email" class="form-control mb-2" id="new-user-email" placeholder="Email" required>
-                <input type="password" class="form-control mb-2" id="new-user-password" placeholder="Heslo" required>
+                <input type="email" class="form-control mb-2" id="new-user-email" data-i18n-placeholder="placeholder-new-email" placeholder="Email" required>
+                <input type="password" class="form-control mb-2" id="new-user-password" data-i18n-placeholder="placeholder-new-password" placeholder="Heslo" required>
                 <div class="form-check mb-2">
                   <input class="form-check-input" type="checkbox" id="new-user-is-admin">
-                  <label class="form-check-label" for="new-user-is-admin">Admin účet</label>
+                  <label class="form-check-label" for="new-user-is-admin" data-i18n="label-admin-account">Admin účet</label>
                 </div>
                 <button type="submit" class="btn btn-bb w-100">
-                  <i class="bi bi-person-plus me-1"></i>Vytvoriť
+                  <i class="bi bi-person-plus me-1"></i><span data-i18n="btn-create">Vytvoriť</span>
                 </button>
               </form>
 
-              <h6 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i>Import používateľov</h6>
+              <h6 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i><span data-i18n="admin-import">Import používateľov</span></h6>
               <textarea id="import-data" class="form-control mb-2" rows="4"
+                        data-i18n-placeholder="placeholder-import"
                         placeholder="email,heslo[,admin] – jeden na riadok"></textarea>
               <button id="import-btn" class="btn btn-outline-success w-100">
-                <i class="bi bi-file-earmark-arrow-up me-1"></i>Importovať
+                <i class="bi bi-file-earmark-arrow-up me-1"></i><span data-i18n="btn-import">Importovať</span>
               </button>
             </div>
 
             <!-- Zoznam používateľov -->
             <div class="col-lg-7">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold mb-0"><i class="bi bi-people me-1"></i>Používatelia</h6>
+                <h6 class="fw-bold mb-0"><i class="bi bi-people me-1"></i><span data-i18n="admin-users">Používatelia</span></h6>
                 <div class="d-flex gap-2">
                   <button id="delete-users-btn" class="btn btn-danger btn-sm" disabled>
-                    <i class="bi bi-trash me-1"></i>Zmazať
+                    <i class="bi bi-trash me-1"></i><span data-i18n="btn-delete">Zmazať</span>
                   </button>
                   <button id="export-btn" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-download me-1"></i>Export CSV
+                    <i class="bi bi-download me-1"></i><span data-i18n="btn-export">Export CSV</span>
                   </button>
                 </div>
               </div>
               <input type="text" class="form-control form-control-sm mb-2" id="search-users"
+                     data-i18n-placeholder="placeholder-search"
                      placeholder="Vyhľadať podľa emailu...">
               <ul id="user-list" class="list-group" style="max-height:400px;overflow-y:auto;"></ul>
             </div>
@@ -224,19 +242,21 @@
           <!-- Povolenie + vozidlá vybraného používateľa -->
           <div class="row g-4 mt-1">
             <div class="col-lg-5">
-              <h6 class="fw-bold mb-3"><i class="bi bi-sliders me-1"></i>Nastaviť povolenie</h6>
+              <h6 class="fw-bold mb-3"><i class="bi bi-sliders me-1"></i><span data-i18n="admin-set-permission">Nastaviť povolenie</span></h6>
               <form id="set-permission-form">
                 <input type="hidden" id="target-user-id">
                 <div class="mb-2">
                   <input type="number" class="form-control" id="daily-entries"
+                         data-i18n-placeholder="placeholder-daily-entries"
                          placeholder="Počet vstupov denne" required>
                 </div>
                 <div class="mb-3">
                   <input type="text" class="form-control" id="time-window"
+                         data-i18n-placeholder="placeholder-time-window"
                          placeholder="Časové okno (napr. 04:00 - 09:00)" required>
                 </div>
                 <button type="submit" class="btn btn-accent w-100">
-                  <i class="bi bi-check-lg me-1"></i>Uložiť povolenie
+                  <i class="bi bi-check-lg me-1"></i><span data-i18n="btn-save-permission">Uložiť povolenie</span>
                 </button>
               </form>
             </div>
@@ -245,9 +265,11 @@
               <div id="admin-vehicle-list" class="mb-3"></div>
               <form id="admin-add-vehicle-form" style="display:none;">
                 <div class="input-group">
-                  <input type="text" class="form-control" id="admin-new-spz" placeholder="Nová ŠPZ pre používateľa">
+                  <input type="text" class="form-control" id="admin-new-spz"
+                         data-i18n-placeholder="placeholder-admin-spz"
+                         placeholder="Nová ŠPZ pre používateľa">
                   <button class="btn btn-success" type="submit">
-                    <i class="bi bi-plus-lg"></i> Pridať
+                    <i class="bi bi-plus-lg"></i> <span data-i18n="btn-add">Pridať</span>
                   </button>
                 </div>
               </form>
@@ -264,6 +286,179 @@
 <script>
   const API_BASE = window.location.origin;
   let selectedUserElement = null;
+  let currentUser = null;
+
+  /* ══════════════ i18n ══════════════ */
+  const translations = {
+    sk: {
+      'page-title': 'Registrácia ŠPZ',
+      'page-subtitle': 'Pešia zóna – Banská Bystrica',
+      'label-email': 'Email',
+      'placeholder-email': 'vas@email.sk',
+      'label-password': 'Heslo',
+      'login-btn': 'Prihlásiť sa',
+      'logging-in': 'Prihlasujem...',
+      'err-login': 'Nesprávny email alebo heslo',
+      'nav-title': 'Registrácia ŠPZ',
+      'nav-subtitle': 'Pešia zóna – Banská Bystrica',
+      'btn-logout': 'Odhlásiť',
+      'card-vehicles': 'Vaše vozidlá',
+      'placeholder-spz': 'Napr. BA123AB',
+      'btn-add': 'Pridať',
+      'no-vehicles': 'Zatiaľ žiadne vozidlá',
+      'vehicle-added': 'ŠPZ bola pridaná',
+      'vehicle-deleted': 'ŠPZ bola zmazaná',
+      'vehicle-delete-err': 'Nepodarilo sa zmazať vozidlo',
+      'vehicle-add-err': 'Chyba pri pridávaní',
+      'confirm-delete-vehicle': 'Naozaj chceš zmazať túto ŠPZ?',
+      'card-permission': 'Vaše povolenie',
+      'no-permission': 'Povolenie nie je nastavené.',
+      'entries-per-day': 'vstupov denne',
+      'card-change-password': 'Zmena hesla',
+      'placeholder-old-password': 'Aktuálne heslo',
+      'placeholder-new-password': 'Nové heslo (min. 8 znakov)',
+      'btn-change-password': 'Zmeniť heslo',
+      'password-changed': 'Heslo úspešne zmenené',
+      'general-err': 'Chyba',
+      'card-admin': 'Administrácia',
+      'admin-create-user': 'Vytvoriť používateľa',
+      'placeholder-new-email': 'Email',
+      'placeholder-new-password': 'Heslo',
+      'label-admin-account': 'Admin účet',
+      'btn-create': 'Vytvoriť',
+      'user-created': 'Používateľ vytvorený',
+      'admin-import': 'Import používateľov',
+      'placeholder-import': 'email,heslo[,admin] – jeden na riadok',
+      'btn-import': 'Importovať',
+      'import-err': 'Chyba pri importe',
+      'admin-users': 'Používatelia',
+      'btn-delete': 'Zmazať',
+      'btn-export': 'Export CSV',
+      'placeholder-search': 'Vyhľadať podľa emailu...',
+      'admin-set-permission': 'Nastaviť povolenie',
+      'placeholder-daily-entries': 'Počet vstupov denne',
+      'placeholder-time-window': 'Časové okno (napr. 04:00 - 09:00)',
+      'btn-save-permission': 'Uložiť povolenie',
+      'permission-set': 'Povolenie nastavené',
+      'permission-err': 'Chyba pri nastavovaní povolenia',
+      'export-done': 'Export stiahnutý',
+      'export-err': 'Nepodarilo sa exportovať',
+      'confirm-delete-users': 'Naozaj chceš zmazať vybraných používateľov?',
+      'users-deleted': 'Zmazaných {n} používateľov',
+      'delete-err': 'Chyba pri mazaní',
+      'admin-vehicle-list': 'Vozidlá používateľa',
+      'no-vehicles-user': 'Žiadne vozidlá',
+      'placeholder-admin-spz': 'Nová ŠPZ pre používateľa',
+      'select-user-first': 'Najprv vyber používateľa zo zoznamu',
+      'vehicle-spz-added': 'ŠPZ pridaná',
+      'vehicle-spz-add-err': 'Nepodarilo sa pridať ŠPZ',
+      'vehicle-spz-deleted': 'ŠPZ zmazaná',
+      'vehicle-spz-delete-err': 'Nepodarilo sa zmazať',
+      'never': 'nikdy',
+      'date-locale': 'sk',
+    },
+    en: {
+      'page-title': 'Licence Plate Registration',
+      'page-subtitle': 'Pedestrian Zone – Banská Bystrica',
+      'label-email': 'Email',
+      'placeholder-email': 'your@email.com',
+      'label-password': 'Password',
+      'login-btn': 'Sign in',
+      'logging-in': 'Signing in...',
+      'err-login': 'Incorrect email or password',
+      'nav-title': 'Licence Plate Registration',
+      'nav-subtitle': 'Pedestrian Zone – Banská Bystrica',
+      'btn-logout': 'Sign out',
+      'card-vehicles': 'Your vehicles',
+      'placeholder-spz': 'E.g. BA123AB',
+      'btn-add': 'Add',
+      'no-vehicles': 'No vehicles yet',
+      'vehicle-added': 'Licence plate added',
+      'vehicle-deleted': 'Licence plate removed',
+      'vehicle-delete-err': 'Failed to remove vehicle',
+      'vehicle-add-err': 'Error adding vehicle',
+      'confirm-delete-vehicle': 'Are you sure you want to remove this licence plate?',
+      'card-permission': 'Your permission',
+      'no-permission': 'No permission has been set.',
+      'entries-per-day': 'entries per day',
+      'card-change-password': 'Change password',
+      'placeholder-old-password': 'Current password',
+      'placeholder-new-password': 'New password (min. 8 characters)',
+      'btn-change-password': 'Change password',
+      'password-changed': 'Password changed successfully',
+      'general-err': 'Error',
+      'card-admin': 'Administration',
+      'admin-create-user': 'Create user',
+      'placeholder-new-email': 'Email',
+      'placeholder-new-password': 'Password',
+      'label-admin-account': 'Admin account',
+      'btn-create': 'Create',
+      'user-created': 'User created',
+      'admin-import': 'Import users',
+      'placeholder-import': 'email,password[,admin] – one per line',
+      'btn-import': 'Import',
+      'import-err': 'Error importing users',
+      'admin-users': 'Users',
+      'btn-delete': 'Delete',
+      'btn-export': 'Export CSV',
+      'placeholder-search': 'Search by email...',
+      'admin-set-permission': 'Set permission',
+      'placeholder-daily-entries': 'Number of daily entries',
+      'placeholder-time-window': 'Time window (e.g. 04:00 - 09:00)',
+      'btn-save-permission': 'Save permission',
+      'permission-set': 'Permission saved',
+      'permission-err': 'Error setting permission',
+      'export-done': 'Export downloaded',
+      'export-err': 'Failed to export',
+      'confirm-delete-users': 'Are you sure you want to delete the selected users?',
+      'users-deleted': '{n} users deleted',
+      'delete-err': 'Error deleting users',
+      'admin-vehicle-list': "User's vehicles",
+      'no-vehicles-user': 'No vehicles',
+      'placeholder-admin-spz': 'New licence plate for user',
+      'select-user-first': 'Please select a user from the list first',
+      'vehicle-spz-added': 'Licence plate added',
+      'vehicle-spz-add-err': 'Failed to add licence plate',
+      'vehicle-spz-deleted': 'Licence plate removed',
+      'vehicle-spz-delete-err': 'Failed to remove',
+      'never': 'never',
+      'date-locale': 'en-GB',
+    }
+  };
+
+  let lang = localStorage.getItem('lang') || 'sk';
+
+  function t(key) {
+    return (translations[lang] && translations[lang][key]) || translations.sk[key] || key;
+  }
+
+  function applyTranslations() {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.placeholder = t(el.dataset.i18nPlaceholder);
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+      btn.classList.toggle('fw-bold', btn.dataset.lang === lang);
+    });
+  }
+
+  function setLang(newLang) {
+    lang = newLang;
+    localStorage.setItem('lang', lang);
+    applyTranslations();
+    // Re-render dynamic content if the app is visible
+    if (currentUser) {
+      loadVehicles();
+      loadPermission();
+      if (currentUser.is_admin) loadUserList(document.getElementById('search-users').value);
+    }
+  }
+
+  applyTranslations();
 
   /* ── Toast notifikácie ── */
   function showToast(message, type = 'success') {
@@ -291,6 +486,7 @@
   checkAuth();
 
   function showApp(user) {
+    currentUser = user;
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     loadVehicles();
@@ -306,7 +502,7 @@
     e.preventDefault();
     const btn = document.getElementById('login-btn');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Prihlasujem...';
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>${t('logging-in')}`;
     const res = await fetch(API_BASE + '/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -314,18 +510,19 @@
       credentials: 'include'
     });
     btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Prihlásiť sa';
+    btn.innerHTML = `<i class="bi bi-box-arrow-in-right me-2"></i><span data-i18n="login-btn">${t('login-btn')}</span>`;
     if (res.ok) {
       const me = await fetch(API_BASE + '/me', { credentials: 'include' });
       showApp(await me.json());
     } else {
-      showToast('Nesprávny email alebo heslo', 'danger');
+      showToast(t('err-login'), 'danger');
     }
   });
 
   /* ── Odhlásenie ── */
   document.getElementById('logout').addEventListener('click', async () => {
     await fetch(API_BASE + '/logout', { method: 'POST', credentials: 'include' });
+    currentUser = null;
     location.reload();
   });
 
@@ -336,7 +533,7 @@
     const list = document.getElementById('vehicle-list');
     list.innerHTML = '';
     if (!vehicles.length) {
-      list.innerHTML = '<li class="list-group-item text-muted py-3"><i class="bi bi-info-circle me-1"></i>Zatiaľ žiadne vozidlá</li>';
+      list.innerHTML = `<li class="list-group-item text-muted py-3"><i class="bi bi-info-circle me-1"></i>${t('no-vehicles')}</li>`;
       return;
     }
     vehicles.forEach(v => {
@@ -349,10 +546,10 @@
   }
 
   async function deleteUserVehicle(vehicleId) {
-    if (!confirm('Naozaj chceš zmazať túto ŠPZ?')) return;
+    if (!confirm(t('confirm-delete-vehicle'))) return;
     const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, { method: 'DELETE', credentials: 'include' });
-    if (res.ok) { loadVehicles(); showToast('ŠPZ bola zmazaná'); }
-    else showToast('Nepodarilo sa zmazať vozidlo', 'danger');
+    if (res.ok) { loadVehicles(); showToast(t('vehicle-deleted')); }
+    else showToast(t('vehicle-delete-err'), 'danger');
   }
 
   document.getElementById('add-vehicle-form').addEventListener('submit', async (e) => {
@@ -362,8 +559,8 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       credentials: 'include', body: JSON.stringify({ spz })
     });
-    if (res.ok) { document.getElementById('spz').value = ''; loadVehicles(); showToast('ŠPZ bola pridaná'); }
-    else { const err = await res.json(); showToast(err.detail || 'Chyba pri pridávaní', 'danger'); }
+    if (res.ok) { document.getElementById('spz').value = ''; loadVehicles(); showToast(t('vehicle-added')); }
+    else { const err = await res.json(); showToast(err.detail || t('vehicle-add-err'), 'danger'); }
   });
 
   /* ── Povolenie ── */
@@ -376,7 +573,7 @@
           <div class="d-flex align-items-center gap-3">
             <div class="text-center">
               <div class="fs-1 fw-bold" style="color:var(--bb-primary);line-height:1">${perm.daily_entries}</div>
-              <small class="text-muted">vstupov denne</small>
+              <small class="text-muted">${t('entries-per-day')}</small>
             </div>
             <div class="vr"></div>
             <div><i class="bi bi-clock me-1 text-muted"></i><strong>${perm.time_window}</strong></div>
@@ -392,8 +589,8 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ old_password: document.getElementById('old-password').value, new_password: document.getElementById('new-password').value })
     });
-    if (res.ok) { showToast('Heslo úspešne zmenené'); e.target.reset(); }
-    else { const err = await res.json(); showToast(err.detail || 'Chyba', 'danger'); }
+    if (res.ok) { showToast(t('password-changed')); e.target.reset(); }
+    else { const err = await res.json(); showToast(err.detail || t('general-err'), 'danger'); }
   });
 
   /* ── Admin: zoznam používateľov ── */
@@ -414,6 +611,9 @@
       } catch {}
       const li = document.createElement('li');
       li.className = 'list-group-item list-group-item-action';
+      const lastLogin = u.last_login
+        ? new Date(u.last_login).toLocaleString(t('date-locale'))
+        : t('never');
       li.innerHTML = `
         <div class="d-flex align-items-center gap-2">
           <input class="form-check-input user-checkbox flex-shrink-0" type="checkbox" value="${u.id}">
@@ -425,7 +625,7 @@
             </div>
             <small class="text-muted">
               <i class="bi bi-box-arrow-in-right me-1"></i>${u.login_count ?? 0}×
-              &nbsp;•&nbsp;${u.last_login ? new Date(u.last_login).toLocaleString('sk') : 'nikdy'}
+              &nbsp;•&nbsp;${lastLogin}
             </small>
           </div>
         </div>`;
@@ -445,14 +645,14 @@
   });
 
   document.getElementById('delete-users-btn').addEventListener('click', async () => {
-    if (!confirm('Naozaj chceš zmazať vybraných používateľov?')) return;
+    if (!confirm(t('confirm-delete-users'))) return;
     const ids = [...document.querySelectorAll('.user-checkbox:checked')].map(cb => cb.value);
     const res = await fetch(`${API_BASE}/admin/users`, {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' },
       credentials: 'include', body: JSON.stringify(ids)
     });
-    if (res.ok) { showToast(`Zmazaných ${ids.length} používateľov`); loadUserList(); }
-    else showToast('Chyba pri mazaní', 'danger');
+    if (res.ok) { showToast(t('users-deleted').replace('{n}', ids.length)); loadUserList(); }
+    else showToast(t('delete-err'), 'danger');
   });
 
   /* ── Admin: vozidlá používateľa ── */
@@ -460,9 +660,9 @@
     const res = await fetch(API_BASE + '/admin/vehicles', { credentials: 'include' });
     const vehicles = (await res.json()).filter(v => v.user_id === userId);
     const container = document.getElementById('admin-vehicle-list');
-    container.innerHTML = `<h6 class="fw-bold mb-2"><i class="bi bi-car-front me-1"></i>Vozidlá používateľa</h6><ul class="list-group list-group-flush"></ul>`;
+    container.innerHTML = `<h6 class="fw-bold mb-2"><i class="bi bi-car-front me-1"></i>${t('admin-vehicle-list')}</h6><ul class="list-group list-group-flush"></ul>`;
     const ul = container.querySelector('ul');
-    if (!vehicles.length) { ul.innerHTML = '<li class="list-group-item text-muted ps-0">Žiadne vozidlá</li>'; }
+    if (!vehicles.length) { ul.innerHTML = `<li class="list-group-item text-muted ps-0">${t('no-vehicles-user')}</li>`; }
     else vehicles.forEach(v => {
       const li = document.createElement('li');
       li.className = 'list-group-item d-flex justify-content-between align-items-center ps-0';
@@ -476,34 +676,34 @@
   document.getElementById('admin-add-vehicle-form').addEventListener('submit', async e => {
     e.preventDefault();
     const userId = document.getElementById('target-user-id').value;
-    if (!userId) { showToast('Najprv vyber používateľa zo zoznamu', 'warning'); return; }
+    if (!userId) { showToast(t('select-user-first'), 'warning'); return; }
     const spz = document.getElementById('admin-new-spz').value;
     const res = await fetch(`${API_BASE}/admin/vehicles/${userId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       credentials: 'include', body: JSON.stringify({ spz })
     });
-    if (res.ok) { document.getElementById('admin-new-spz').value = ''; await loadAdminUserVehicles(userId); showToast('ŠPZ pridaná'); }
-    else { const err = await res.json(); showToast(err.detail || 'Nepodarilo sa pridať ŠPZ', 'danger'); }
+    if (res.ok) { document.getElementById('admin-new-spz').value = ''; await loadAdminUserVehicles(userId); showToast(t('vehicle-spz-added')); }
+    else { const err = await res.json(); showToast(err.detail || t('vehicle-spz-add-err'), 'danger'); }
   });
 
   async function deleteVehicle(vehicleId, userId) {
-    if (!confirm('Naozaj chceš zmazať túto ŠPZ?')) return;
+    if (!confirm(t('confirm-delete-vehicle'))) return;
     const res = await fetch(`${API_BASE}/vehicles/${vehicleId}`, { method: 'DELETE', credentials: 'include' });
-    if (res.ok) { await loadAdminUserVehicles(userId); showToast('ŠPZ zmazaná'); }
-    else showToast('Nepodarilo sa zmazať', 'danger');
+    if (res.ok) { await loadAdminUserVehicles(userId); showToast(t('vehicle-spz-deleted')); }
+    else showToast(t('vehicle-spz-delete-err'), 'danger');
   }
 
   /* ── Admin: povolenie ── */
   document.getElementById('set-permission-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const userId = document.getElementById('target-user-id').value;
-    if (!userId) { showToast('Najprv vyber používateľa zo zoznamu', 'warning'); return; }
+    if (!userId) { showToast(t('select-user-first'), 'warning'); return; }
     const res = await fetch(`${API_BASE}/admin/permissions/${userId}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ daily_entries: parseInt(document.getElementById('daily-entries').value), time_window: document.getElementById('time-window').value })
     });
-    if (res.ok) { showToast('Povolenie nastavené'); e.target.reset(); loadUserList(); }
-    else showToast('Chyba pri nastavovaní povolenia', 'danger');
+    if (res.ok) { showToast(t('permission-set')); e.target.reset(); loadUserList(); }
+    else showToast(t('permission-err'), 'danger');
   });
 
   /* ── Export CSV ── */
@@ -511,8 +711,8 @@
     const res = await fetch(`${API_BASE}/admin/export`, { credentials: 'include' });
     if (res.ok) {
       const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(await res.blob()), download: 'export.csv' });
-      a.click(); URL.revokeObjectURL(a.href); showToast('Export stiahnutý');
-    } else showToast('Nepodarilo sa exportovať', 'danger');
+      a.click(); URL.revokeObjectURL(a.href); showToast(t('export-done'));
+    } else showToast(t('export-err'), 'danger');
   });
 
   /* ── Vytvorenie používateľa (admin) ── */
@@ -522,8 +722,8 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include',
       body: JSON.stringify({ email: document.getElementById('new-user-email').value, password: document.getElementById('new-user-password').value })
     });
-    if (res.ok) { showToast('Používateľ vytvorený'); e.target.reset(); loadUserList(); }
-    else { const err = await res.json(); showToast(err.detail || 'Chyba', 'danger'); }
+    if (res.ok) { showToast(t('user-created')); e.target.reset(); loadUserList(); }
+    else { const err = await res.json(); showToast(err.detail || t('general-err'), 'danger'); }
   });
 
   /* ── Import ── */
@@ -535,7 +735,7 @@
       credentials: 'include', body: JSON.stringify(raw.split('\n').map(l => l.split(',')))
     });
     if (res.ok) { const d = await res.json(); showToast(d.message); document.getElementById('import-data').value = ''; loadUserList(); }
-    else showToast('Chyba pri importe', 'danger');
+    else showToast(t('import-err'), 'danger');
   });
 </script>
 </body>
