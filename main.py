@@ -17,6 +17,7 @@ from jose import JWTError, jwt
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from prometheus_fastapi_instrumentator import Instrumentator
 import csv
 import re
 import secrets
@@ -45,6 +46,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+Instrumentator().instrument(app).expose(app, include_in_schema=False)
 
 sqlite_file_name = "data/db.sqlite"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
