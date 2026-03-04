@@ -29,7 +29,7 @@ services:
       - proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.grafana.rule=Host(`${GRAFANA_DOMAIN:-grafana.example.com}`)
+      - traefik.http.routers.grafana.rule=Host(`grafana.system15.win`)
       - traefik.http.routers.grafana.entrypoints=https
       - traefik.http.routers.grafana.tls.certresolver=letsencrypt
       - traefik.http.services.grafana.loadbalancer.server.port=3000
