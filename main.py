@@ -380,6 +380,8 @@ def import_users(
     invalid = []
     with Session(engine) as session:
         for row in data:
+            if not row or row[0].startswith('#'):
+                continue
             if len(row) < 2:
                 continue
             email = row[0].strip().lower()
