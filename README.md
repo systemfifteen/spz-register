@@ -1,95 +1,114 @@
-# 🅿️ Registrácia ŠPZ – Pešia zóna Banská Bystrica
+# Registrácia ŠPZ – Pešia zóna Banská Bystrica
 
-Jednoduchá webová aplikácia na správu vstupov vozidiel do pešej zóny mesta Banská Bystrica. Umožňuje registráciu ŠPZ, správu oprávnení a administráciu vstupov.
+Webová aplikácia na správu vstupov vozidiel do pešej zóny mesta Banská Bystrica.
 
----
-
-## ✨ Funkcie
-
-- Registrácia a prihlásenie používateľov
-- Admin rozhranie na správu používateľov, vozidiel a povolení
-- Vyhľadávanie, export do CSV, import nových používateľov
-- Možnosť zmeny hesla, hromadného mazania a pridávania vozidiel
-- Frontend servovaný z backendu (1 Docker kontajner)
-- Nasadenie pomocou Docker Compose
+**Produkčné URL:** https://spz.poetika.online
 
 ---
 
-## 🚀 Nasadenie na serveri (s Docker Compose)
+## Funkcie
 
-> Vyžaduje: [Docker](https://docs.docker.com/get-docker/) a [Docker Compose](https://docs.docker.com/compose/)
+**Používateľské:**
+- Prihlásenie cez httpOnly cookie (JWT, 8h platnosť)
+- Registrácia a správa vlastných vozidiel (ŠPZ)
+- Zobrazenie prideleného povolenia (počet vstupov, časové okno)
+- Zmena hesla + reset hesla cez email
+- Prepínanie jazyka SK / EN
+
+**Administrátorské:**
+- Správa používateľov — prehľad, vyhľadávanie, hromadné mazanie
+- Zoskupenie používateľov podľa stavu prihlásenia
+- Nastavenie povolení (počet vstupov denne, časové okno)
+- Správa vozidiel za jednotlivých používateľov
+- Import používateľov z CSV (podpora komentárov `#`)
+- Export do CSV
+
+**Technické:**
+- Rate limiting (`/token` 5/min, `/register` 5/min, `/forgot-password` 3/min)
+- Validácia formátu ŠPZ (`BA123AB`)
+- Sila hesla (vizuálny indikátor)
+- Prometheus metriky (`/metrics`)
+- Denné SQLite zálohy s rotáciou 7 dní
+
+---
+
+## Tech stack
+
+| Vrstva | Technológia |
+|--------|-------------|
+| Backend | FastAPI + SQLModel (SQLite) |
+| Auth | python-jose (JWT) + passlib (bcrypt) |
+| Frontend | Vanilla JS + Bootstrap 5.3 (single HTML) |
+| Infra | Docker + Traefik (Coolify) |
+| Monitoring | Prometheus + Grafana |
+
+---
+
+## Nasadenie (Coolify)
+
+Aplikácia beží cez [Coolify](https://coolify.io) s Traefik reverse proxy.
+
+Požadované env vars:
+
+```
+SECRET_KEY=        # povinné, min. 32 znakov
+ALLOWED_ORIGINS=https://spz.poetika.online
+SMTP_HOST=
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_FROM=
+```
+
+### Lokálne (bez Coolify)
 
 ```bash
 git clone https://github.com/systemfifteen/spz-register.git
 cd spz-register
-docker compose up -d --build
+SECRET_KEY=lokalny-dev-kluc docker compose up -d --build
 ```
 
-Aplikácia bude dostupná na `http://localhost:8000` (alebo cez reverzný proxy na zvolenej doméne).
+Aplikácia beží na `http://localhost:8000`.
 
 ---
 
-## 🧑‍💻 Pridanie admin používateľa
-
-Ak je databáza prázdna alebo nová, admina pridáš takto:
-
-1. Inicializuj databázu (len raz pri prvej inštalácii):
+## Prvý admin
 
 ```bash
-docker exec -it fastapi-spz python3 scripts/init_db.py
-```
-
-2. Pridaj admina:
-
-```bash
-docker exec -it fastapi-spz python3 scripts/create_admin_inline.py admin@poetika.online tajneheslo
+docker exec -it <container> python3 scripts/create_admin_inline.py admin@example.com heslo
 ```
 
 ---
 
-## 🧪 Testovanie API
-
-```bash
-curl -X POST http://localhost:8000/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin@poetika.online&password=tajneheslo"
-```
-
----
-
-## 📁 Struktúra projektu
+## Štruktúra projektu
 
 ```
 spz-register/
-├── main.py                  # FastAPI backend + frontend serving
-├── frontend/                # Webové rozhranie (index.html + JS)
-├── scripts/                 # DB inicializácia, vytváranie admina
+├── main.py                  # FastAPI backend (modely, endpointy, auth)
+├── frontend/
+│   └── index.html           # SPA frontend (JS + Bootstrap)
+├── monitoring/
+│   ├── compose.yaml         # Prometheus + Grafana stack
+│   └── prometheus.yml       # Scrape config
+├── scripts/
+│   ├── create_admin_inline.py
+│   └── backup.sh            # Denná záloha SQLite (cron)
 ├── Dockerfile
-├── docker-compose.yml
+├── compose.yaml
 ├── requirements.txt
-└── data/db.sqlite           # SQLite databáza (mountovaná)
+└── data/
+    └── db.sqlite
 ```
 
 ---
 
-## 📦 Import / export
+## Monitoring
 
-- CSV export: dostupný cez admin rozhranie
-- CSV import: zatiaľ manuálne (plánované rozšírenie)
-
----
-
-## 📌 TODO
-
-- ✅ Nasadenie s reverzným proxy (HAProxy, HTTPS, SNI)
-- 🔒 Validácia formátu ŠPZ
-- 📊 Logovanie vstupov
-- 📤 Automatické zálohy DB
-- 📱 Mobilná verzia
-- 🔐 OAuth/SSO autentifikácia
+Prometheus + Grafana sú nasadené ako samostatný stack (`monitoring/compose.yaml`).
+FastAPI vystavuje metriky na `/metrics` (requesty, latency, status kódy per endpoint).
 
 ---
 
-## 🧠 Licencia
+## Licencia
 
 Interný projekt pre potreby mesta Banská Bystrica a partnerských subjektov.
