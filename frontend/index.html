@@ -424,6 +424,9 @@
       'vehicle-spz-deleted': 'ŠPZ zmazaná',
       'vehicle-spz-delete-err': 'Nepodarilo sa zmazať',
       'never': 'nikdy',
+      'never-logged-in': 'Neprihlásený',
+      'group-active': 'Prihlásení',
+      'group-pending': 'Ešte neprihlásení',
       'date-locale': 'sk',
       'pw-weak': 'Slabé',
       'pw-fair': 'Primerané',
@@ -509,6 +512,9 @@
       'vehicle-spz-deleted': 'Licence plate removed',
       'vehicle-spz-delete-err': 'Failed to remove',
       'never': 'never',
+      'never-logged-in': 'Never signed in',
+      'group-active': 'Active users',
+      'group-pending': 'Never signed in',
       'date-locale': 'en-GB',
       'pw-weak': 'Weak',
       'pw-fair': 'Fair',
@@ -806,20 +812,38 @@
 
   async function loadUserList(filter = '') {
     const list = document.getElementById('user-list');
-    list.innerHTML = spinner();
+    list.innerHTML = `<li class="list-group-item">${spinner()}</li>`;
     const res = await fetch(API_BASE + '/admin/users', { credentials: 'include' });
     const users = await res.json();
     list.innerHTML = '';
-    for (const u of users) {
-      if (!u.email.toLowerCase().includes(filter.toLowerCase())) continue;
+
+    const q = filter.toLowerCase();
+    const filtered = users.filter(u => u.email.toLowerCase().includes(q));
+    const loggedIn = filtered.filter(u => (u.login_count ?? 0) > 0)
+      .sort((a, b) => new Date(b.last_login) - new Date(a.last_login));
+    const never = filtered.filter(u => (u.login_count ?? 0) === 0)
+      .sort((a, b) => a.email.localeCompare(b.email));
+
+    const addSeparator = (labelKey) => {
+      const sep = document.createElement('li');
+      sep.className = 'list-group-item py-1 border-0 text-muted';
+      sep.style.cssText = 'font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;background:transparent;pointer-events:none;';
+      sep.textContent = t(labelKey);
+      list.appendChild(sep);
+    };
+
+    const renderUser = (u) => {
       const permInfo = u.daily_entries != null
         ? `<span class="badge bg-success-subtle text-success">${u.daily_entries}× • ${u.time_window}</span>`
         : '';
-      const li = document.createElement('li');
-      li.className = 'list-group-item list-group-item-action';
+      const neverBadge = (u.login_count ?? 0) === 0
+        ? `<span class="badge bg-secondary-subtle text-secondary">${t('never-logged-in')}</span>`
+        : '';
       const lastLogin = u.last_login
         ? new Date(u.last_login).toLocaleString(t('date-locale'))
         : t('never');
+      const li = document.createElement('li');
+      li.className = 'list-group-item list-group-item-action';
       li.innerHTML = `
         <div class="d-flex align-items-center gap-2">
           <input class="form-check-input user-checkbox flex-shrink-0" type="checkbox" value="${u.id}">
@@ -828,6 +852,7 @@
               <strong>${u.email}</strong>
               ${u.is_admin ? '<span class="badge bg-warning text-dark">admin</span>' : ''}
               ${permInfo}
+              ${neverBadge}
             </div>
             <small class="text-muted">
               <i class="bi bi-box-arrow-in-right me-1"></i>${u.login_count ?? 0}×
@@ -842,7 +867,16 @@
         await loadAdminUserVehicles(u.id);
         document.getElementById('set-permission-form').scrollIntoView({ behavior: 'smooth' });
       });
-      list.appendChild(li);
+      return li;
+    };
+
+    if (loggedIn.length > 0) {
+      if (never.length > 0) addSeparator('group-active');
+      loggedIn.forEach(u => list.appendChild(renderUser(u)));
+    }
+    if (never.length > 0) {
+      if (loggedIn.length > 0) addSeparator('group-pending');
+      never.forEach(u => list.appendChild(renderUser(u)));
     }
   }
 
