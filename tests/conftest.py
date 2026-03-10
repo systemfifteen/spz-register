@@ -33,7 +33,7 @@ def test_user(admin_client):
     assert user_id, "Test používateľ nebol vytvorený"
     yield {"email": TEST_EMAIL, "password": TEST_PASSWORD, "id": user_id}
     # Cleanup
-    admin_client.delete("/admin/users", json=[user_id])
+    admin_client.request("DELETE", "/admin/users", json=[user_id])
 
 
 @pytest.fixture(scope="session")

@@ -185,7 +185,7 @@ class TestAdmin:
         users = admin_client.get("/admin/users").json()
         uid = next((u["id"] for u in users if u["email"] == "import.test@spz.test"), None)
         if uid:
-            admin_client.delete("/admin/users", json=[uid])
+            admin_client.request("DELETE", "/admin/users", json=[uid])
 
     def test_admin_endpoints_require_auth(self, base_url):
         for path in ["/admin/users", "/admin/export", "/admin/vehicles"]:

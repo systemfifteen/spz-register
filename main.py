@@ -230,6 +230,7 @@ def add_vehicle(vehicle: VehicleCreate, user: User = Depends(get_user_by_token))
         new_vehicle = Vehicle(user_id=user.id, spz=vehicle.spz)
         session.add(new_vehicle)
         session.commit()
+        session.refresh(new_vehicle)
         return new_vehicle
 
 @app.get("/vehicles")
@@ -303,6 +304,7 @@ def add_vehicle_admin(user_id: str, vehicle: VehicleCreate, user: User = Depends
         new_vehicle = Vehicle(user_id=user_id, spz=vehicle.spz)
         session.add(new_vehicle)
         session.commit()
+        session.refresh(new_vehicle)
         return new_vehicle
 
 @app.get("/admin/export")
