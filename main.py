@@ -69,6 +69,8 @@ SMTP_USER = os.getenv("SMTP_USER")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
 SMTP_FROM = os.getenv("SMTP_FROM") or SMTP_USER
 
+RATE_LIMIT_LOGIN = os.getenv("RATE_LIMIT_LOGIN", "5/minute")
+
 def create_access_token(user_id: str) -> str:
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
     return jwt.encode({"sub": user_id, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
@@ -191,7 +193,7 @@ def register(request: Request, user: UserCreate):
         return {"message": "User registered"}
 
 @app.post("/token")
-@limiter.limit("5/minute")
+@limiter.limit(RATE_LIMIT_LOGIN)
 def login(request: Request, response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == form_data.username)).first()
