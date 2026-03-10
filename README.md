@@ -51,13 +51,14 @@ Aplikácia beží cez [Coolify](https://coolify.io) s Traefik reverse proxy.
 Požadované env vars:
 
 ```
-SECRET_KEY=        # povinné, min. 32 znakov
+SECRET_KEY=            # povinné, min. 32 znakov
 ALLOWED_ORIGINS=https://spz.poetika.online
 SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASSWORD=
 SMTP_FROM=
+RATE_LIMIT_LOGIN=5/minute   # rate limit na /token a /register (default: 5/minute)
 ```
 
 ### Lokálne (bez Coolify)
@@ -106,6 +107,46 @@ spz-register/
 
 Prometheus + Grafana sú nasadené ako samostatný stack (`monitoring/compose.yaml`).
 FastAPI vystavuje metriky na `/metrics` (requesty, latency, status kódy per endpoint).
+
+---
+
+## Testovanie
+
+### Funkčné testy (pytest)
+
+```bash
+pip install -r tests/requirements.txt
+TEST_ADMIN_EMAIL=admin@example.com TEST_ADMIN_PASSWORD=heslo pytest tests/ -v
+```
+
+Testy bežia voči produkčnej URL (premenná `TEST_URL`, default: `https://spz.poetika.online`).
+Automaticky vytvoria a po teste zmažú testovacieho používateľa `test.auto@spz.test`.
+
+### Záťažové testy (Locust)
+
+**Odporúčané: spustiť z laptopu** (nie zo servera), aby sa predišlo rate-limitingu na `/token`:
+
+```bash
+pip install -r tests/requirements.txt
+TEST_ADMIN_EMAIL=admin@example.com TEST_ADMIN_PASSWORD=heslo \
+  locust -f tests/locustfile.py --host https://spz.poetika.online \
+  --headless -u 20 -r 2 --run-time 60s
+```
+
+Alebo s web UI na `http://localhost:8089`:
+```bash
+locust -f tests/locustfile.py --host https://spz.poetika.online
+```
+
+**Spúšťanie zo servera:** Locust a app bežia na rovnakej IP, čo spôsobuje
+rate-limiting prihlásenia (5/min). Riešenie — dočasne zvýšiť limit v Coolify:
+```
+RATE_LIMIT_LOGIN=100/minute
+```
+Po skončení testu vrátiť na `5/minute` a redeployovať.
+
+Locust automaticky vytvorí pool dočasných účtov (`locust-*@spz.test`) a po skončení
+testu ich zmaže. Ak cleanup zlyhá, účty možno zmazať ručne cez admin panel.
 
 ---
 
