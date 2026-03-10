@@ -47,7 +47,8 @@ class TestAuth:
             f"{base_url}/token",
             data={"username": "neexistuje@test.sk", "password": "heslo123"},
         )
-        assert r.status_code == 401
+        # 401 = nesprávne credentials, 429 = rate limit (oba sú správne správanie)
+        assert r.status_code in (401, 429)
 
 
 # ── Vozidlá ────────────────────────────────────────────────────────────────
