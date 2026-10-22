@@ -152,7 +152,7 @@ class TestPasswordReset:
             f"{base_url}/reset-password",
             json={"token": "nejaky-token", "new_password": "kratke"},
         )
-        assert r.status_code == 400
+        assert r.status_code in (400, 422)  # 422 = validácia modelu (od opravy auditu)
 
 
 # ── Admin ──────────────────────────────────────────────────────────────────

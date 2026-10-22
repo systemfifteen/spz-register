@@ -29,6 +29,14 @@ for col, definition in login_columns.items():
     else:
         print(f"✅ Stĺpec {col} už existuje.")
 
+# Migrácia 3: verzia tokenov (odhlásenie / zmena hesla zneplatní staré JWT)
+if "token_version" not in existing_columns:
+    print("➕ Pridávam stĺpec: token_version")
+    cursor.execute("ALTER TABLE user ADD COLUMN token_version INTEGER DEFAULT 0 NOT NULL;")
+    added = True
+else:
+    print("✅ Stĺpec token_version už existuje.")
+
 # Migrácia 2: Unique index na email
 cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name='idx_user_email';")
 if not cursor.fetchone():

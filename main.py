@@ -31,7 +31,15 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     SQLModel.metadata.create_all(engine)
+    migrate(engine)
     yield
+
+def migrate(engine):
+    """create_all nepridá stĺpec do existujúcej tabuľky – bez neho by padal každý dotaz na User."""
+    with engine.begin() as conn:
+        cols = {r[1] for r in conn.exec_driver_sql("PRAGMA table_info(user)")}
+        if "token_version" not in cols:
+            conn.exec_driver_sql("ALTER TABLE user ADD COLUMN token_version INTEGER DEFAULT 0 NOT NULL")
 
 app = FastAPI(lifespan=lifespan)
 app.state.limiter = limiter
@@ -71,9 +79,35 @@ SMTP_FROM = os.getenv("SMTP_FROM") or SMTP_USER
 
 RATE_LIMIT_LOGIN = os.getenv("RATE_LIMIT_LOGIN", "5/minute")
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, token_version: int = 0) -> str:
     expire = datetime.utcnow() + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
-    return jwt.encode({"sub": user_id, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode({"sub": user_id, "tv": token_version, "exp": expire}, SECRET_KEY, algorithm=ALGORITHM)
+
+# bcrypt pracuje len s prvými 72 bajtami – dlhšie heslo by sa ticho orezalo alebo spadlo na 500
+PASSWORD_MAX_BYTES = 72
+EMAIL_RE = re.compile(r"^[a-z0-9._%+-]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$")
+CSV_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+def check_new_password(v: str) -> str:
+    if len(v) < 8:
+        raise ValueError('Heslo musí mať aspoň 8 znakov')
+    if len(v.encode()) > PASSWORD_MAX_BYTES:
+        raise ValueError(f'Heslo môže mať najviac {PASSWORD_MAX_BYTES} bajtov')
+    return v
+
+def normalize_email(v: str) -> str:
+    """Iba bežné znaky – email sa zobrazuje v admin rozhraní a exportuje do CSV."""
+    v = v.strip().lower()
+    if not EMAIL_RE.match(v) or v[0] in CSV_FORMULA_PREFIXES:
+        raise ValueError('Neplatný formát emailu')
+    return v
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return len(plain.encode()) <= PASSWORD_MAX_BYTES and pwd_context.verify(plain, hashed)
+
+def csv_cell(v):
+    """Bunka začínajúca =, +, -, @ by sa v Exceli vykonala ako vzorec."""
+    return "'" + v if isinstance(v, str) and v.startswith(CSV_FORMULA_PREFIXES) else v
 
 class User(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()), primary_key=True)
@@ -82,6 +116,7 @@ class User(SQLModel, table=True):
     is_admin: bool = False
     login_count: int = 0
     last_login: Optional[datetime] = None
+    token_version: int = 0  # zvýši sa pri odhlásení / zmene hesla → staré tokeny prestanú platiť
 
 class UserPublic(BaseModel):
     id: str
@@ -101,17 +136,12 @@ class UserCreate(BaseModel):
     @field_validator('email')
     @classmethod
     def validate_email(cls, v: str) -> str:
-        v = v.strip().lower()
-        if '@' not in v or '.' not in v.split('@')[-1]:
-            raise ValueError('Neplatný formát emailu')
-        return v
+        return normalize_email(v)
 
     @field_validator('password')
     @classmethod
     def validate_password(cls, v: str) -> str:
-        if len(v) < 8:
-            raise ValueError('Heslo musí mať aspoň 8 znakov')
-        return v
+        return check_new_password(v)
 
 class Vehicle(SQLModel, table=True):
     id: Optional[str] = Field(default_factory=lambda: str(uuid4()), primary_key=True)
@@ -142,6 +172,11 @@ class PasswordChange(BaseModel):
     old_password: str
     new_password: str
 
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        return check_new_password(v)
+
 class PasswordResetToken(SQLModel, table=True):
     token: str = Field(primary_key=True)
     user_id: str
@@ -153,6 +188,11 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
+        return check_new_password(v)
 
 def get_user_by_token(
     access_token: Optional[str] = Cookie(default=None),
@@ -172,7 +212,14 @@ def get_user_by_token(
         user = session.get(User, user_id)
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
+        # tokeny spred tejto zmeny nemajú "tv" → platia ako verzia 0
+        if payload.get("tv", 0) != user.token_version:
+            raise HTTPException(status_code=401, detail="Token revoked")
         return user
+
+def revoke_tokens(user: User):
+    """Volať v otvorenej session pred commitom."""
+    user.token_version = (user.token_version or 0) + 1
 
 def require_admin(user: User = Depends(get_user_by_token)) -> User:
     if not user.is_admin:
@@ -197,7 +244,7 @@ def register(request: Request, user: UserCreate):
 def login(request: Request, response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.email == form_data.username)).first()
-        if not user or not pwd_context.verify(form_data.password, user.hashed_password):
+        if not user or not verify_password(form_data.password, user.hashed_password):
             raise HTTPException(status_code=401, detail="Incorrect email or password")
 
         # 🆕 aktualizuj počet prihlásení a čas
@@ -206,7 +253,7 @@ def login(request: Request, response: Response, form_data: OAuth2PasswordRequest
         session.add(user)
         session.commit()
 
-        token = create_access_token(user.id)
+        token = create_access_token(user.id, user.token_version)
         response.set_cookie(
             key="access_token",
             value=token,
@@ -223,6 +270,11 @@ def get_me(user: User = Depends(get_user_by_token)):
 
 @app.post("/logout")
 def logout(response: Response, user: User = Depends(get_user_by_token)):
+    with Session(engine) as session:
+        db_user = session.get(User, user.id)
+        revoke_tokens(db_user)
+        session.add(db_user)
+        session.commit()
     response.delete_cookie("access_token")
     return {"message": "Odhlásenie úspešné"}
 
@@ -326,19 +378,19 @@ def export_csv(user: User = Depends(require_admin)):
             user_vehicles = [v.spz for v in vehicles if v.user_id == u.id]
             if user_vehicles:
                 for spz in user_vehicles:
-                    writer.writerow([
+                    writer.writerow([csv_cell(c) for c in [
                         u.email, u.id, u.is_admin,
                         user_perm.daily_entries if user_perm else "",
                         user_perm.time_window if user_perm else "",
                         spz
-                    ])
+                    ]])
             else:
-                writer.writerow([
+                writer.writerow([csv_cell(c) for c in [
                     u.email, u.id, u.is_admin,
                     user_perm.daily_entries if user_perm else "",
                     user_perm.time_window if user_perm else "",
                     ""
-                ])
+                ]])
 
     output.seek(0)
     return StreamingResponse(output, media_type="text/csv", headers={
@@ -392,10 +444,10 @@ def import_users(
             password = row[1].strip()
             is_admin = row[2].strip().lower() == "true" if len(row) > 2 else False
 
-            if '@' not in email or '.' not in email.split('@')[-1]:
-                invalid.append(email)
-                continue
-            if len(password) < 8:
+            try:
+                email = normalize_email(email)
+                check_new_password(password)
+            except ValueError:
                 invalid.append(email)
                 continue
 
@@ -467,8 +519,6 @@ def forgot_password(request: Request, data: PasswordResetRequest):
 
 @app.post("/reset-password")
 def reset_password(data: PasswordResetConfirm):
-    if len(data.new_password) < 8:
-        raise HTTPException(status_code=400, detail="Heslo musí mať aspoň 8 znakov")
     with Session(engine) as session:
         reset_token = session.get(PasswordResetToken, data.token)
         if not reset_token:
@@ -483,6 +533,7 @@ def reset_password(data: PasswordResetConfirm):
             session.commit()
             raise HTTPException(status_code=400, detail="Používateľ neexistuje")
         user.hashed_password = pwd_context.hash(data.new_password)
+        revoke_tokens(user)
         session.add(user)
         session.delete(reset_token)
         session.commit()
@@ -490,15 +541,25 @@ def reset_password(data: PasswordResetConfirm):
 
 
 @app.post("/change-password")
-def change_password(data: PasswordChange, user: User = Depends(get_user_by_token)):
+def change_password(response: Response, data: PasswordChange, user: User = Depends(get_user_by_token)):
     with Session(engine) as session:
         db_user = session.get(User, user.id)
-        if not db_user or not pwd_context.verify(data.old_password, db_user.hashed_password):
+        if not db_user or not verify_password(data.old_password, db_user.hashed_password):
             raise HTTPException(status_code=400, detail="Nesprávne aktuálne heslo")
 
         db_user.hashed_password = pwd_context.hash(data.new_password)
+        revoke_tokens(db_user)
         session.add(db_user)
         session.commit()
+        # ostatné zariadenia sa odhlásia, toto dostane nový token
+        response.set_cookie(
+            key="access_token",
+            value=create_access_token(db_user.id, db_user.token_version),
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600,
+        )
 
     return {"message": "Heslo bolo zmenené"}
 
