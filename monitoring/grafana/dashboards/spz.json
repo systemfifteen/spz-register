@@ -1,0 +1,863 @@
+{
+ "uid": "adtgcdz",
+ "title": "SPZ – registrácia vozidiel",
+ "tags": [
+  "spz",
+  "app"
+ ],
+ "description": "Prevádzka spz.poetika.online. Návštevnosť: Umami.",
+ "links": [
+  {
+   "title": "Návštevnosť v Umami",
+   "url": "https://stats.system15.win",
+   "type": "link",
+   "icon": "external link",
+   "targetBlank": true
+  }
+ ],
+ "timezone": "browser",
+ "refresh": "1m",
+ "time": {
+  "from": "now-7d",
+  "to": "now"
+ },
+ "graphTooltip": 1,
+ "editable": true,
+ "schemaVersion": 41,
+ "panels": [
+  {
+   "type": "row",
+   "id": 1,
+   "title": "Stav appky (spz.poetika.online)",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "id": 2,
+   "title": "Appka",
+   "description": "Či Prometheus zastihol appku pri poslednom zbere (každých 15 s).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max(up{job=\"spz\"}) or vector(0)",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     },
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "1": {
+         "text": "BEŽÍ",
+         "color": "green"
+        },
+        "0": {
+         "text": "NEBEŽÍ",
+         "color": "red"
+        }
+       }
+      }
+     ]
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 3,
+   "title": "Beží bez reštartu",
+   "description": "Reštartuje sa pri každom deployi.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 4,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "time() - process_start_time_seconds{job=\"spz\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "dtdurations",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 4,
+   "title": "Požiadavky za 24 h",
+   "description": "Bez interných /metrics a /health. Návštevnosť podrobne v Umami (stats.system15.win).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "round(sum(increase(http_requests_total{job=\"spz\",handler!~\"/metrics|/health\"}[24h])))",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 5,
+   "title": "Chyby servera za 24 h",
+   "description": "Odpovede 5xx = chyba v appke. Má byť 0.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "round(sum(increase(http_requests_total{job=\"spz\",status=\"5xx\"}[24h]))) or vector(0)",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 6,
+   "title": "Neúspešné prihlásenia za 24 h",
+   "description": "Zlé heslo alebo zablokované rate-limitom (5 pokusov/min). Veľa = niekto skúša heslá.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "round(sum(increase(http_requests_total{job=\"spz\",handler=\"/token\",status=\"4xx\"}[24h]))) or vector(0)",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 5
+       },
+       {
+        "color": "red",
+        "value": 20
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 7,
+   "title": "Odozva p95 za 24 h",
+   "description": "95 % požiadaviek bolo vybavených rýchlejšie než táto hodnota.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 20,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"spz\",handler!~\"/metrics|/health\"}[24h])))",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 0.5
+       },
+       {
+        "color": "red",
+        "value": 2
+       }
+      ]
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "row",
+   "id": 8,
+   "title": "Prevádzka",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "id": 9,
+   "title": "Požiadavky podľa adresy (za hodinu)",
+   "description": "Bez interných /metrics a /health. „neznáma adresa“ = požiadavky na neexistujúce URL, väčšinou boty.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 6,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (handler) (increase(http_requests_total{job=\"spz\",handler!~\"/metrics|/health\"}[$__interval]))",
+     "legendFormat": "{{handler}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "interval": "1h"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "min": 0,
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 80,
+      "gradientMode": "none",
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "normal",
+       "group": "A"
+      },
+      "barAlignment": 0
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "decimals": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "none"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "neznáma adresa (skenery, 404)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "/"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "úvodná stránka"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": [
+      "sum"
+     ]
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "interval": "1h"
+  },
+  {
+   "type": "timeseries",
+   "id": 10,
+   "title": "Prihlásenia (za hodinu)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 6,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(increase(http_requests_total{job=\"spz\",handler=\"/token\",status=\"2xx\"}[$__interval])) or vector(0)",
+     "legendFormat": "úspešné",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "interval": "1h"
+    },
+    {
+     "refId": "B",
+     "expr": "sum(increase(http_requests_total{job=\"spz\",handler=\"/token\",status=\"4xx\"}[$__interval])) or vector(0)",
+     "legendFormat": "neúspešné",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "interval": "1h"
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "min": 0,
+     "custom": {
+      "drawStyle": "bars",
+      "lineWidth": 2,
+      "fillOpacity": 80,
+      "gradientMode": "none",
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "normal",
+       "group": "A"
+      },
+      "barAlignment": 0
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "decimals": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "úspešné"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "neúspešné"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": [
+      "sum"
+     ]
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   },
+   "interval": "1h"
+  },
+  {
+   "type": "timeseries",
+   "id": 11,
+   "title": "Odozva",
+   "description": "Kĺzavé okno 1 h. Pri malej návštevnosti môžu byť medzery.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 14,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"spz\",handler!~\"/metrics|/health\"}[1h])))",
+     "legendFormat": "medián",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"spz\",handler!~\"/metrics|/health\"}[1h])))",
+     "legendFormat": "p95",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "min": 0,
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 15,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "barAlignment": 0
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "medián"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "p95"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 12,
+   "title": "Zdroje appky",
+   "description": "Limit kontajnera 256 MB.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 14,
+    "w": 12,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "process_resident_memory_bytes{job=\"spz\"}",
+     "legendFormat": "pamäť (RAM)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "min": 0,
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 15,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "barAlignment": 0
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "pamäť (RAM)"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "purple"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  }
+ ],
+ "templating": {
+  "list": []
+ },
+ "annotations": {
+  "list": []
+ }
+}
