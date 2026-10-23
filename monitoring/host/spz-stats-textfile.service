@@ -1,0 +1,12 @@
+[Unit]
+Description=spz-register – súhrnné štatistiky z nočnej zálohy pre Prometheus (node_exporter textfile)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/spz-stats-textfile
+Nice=10
+ProtectSystem=strict
+ReadWritePaths=/var/lib/prometheus/node-exporter
+ProtectHome=read-only
+PrivateTmp=true
+NoNewPrivileges=true

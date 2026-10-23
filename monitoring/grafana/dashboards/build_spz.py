@@ -102,11 +102,10 @@ if WITH_STATS:
     y += 4
     stat("Posledná záloha", 0, y, 6, [tgt(f'time() - spz_backup_last_timestamp_seconds{{{N}}}', instant=True)], unit="dtdurations",
          thr=th("green", 93600, "orange", 180000, "red"), desc="Záloha beží každú noc o 3:00. Viac ako 26 h = posledná nočná záloha neprebehla.")
-    stat("Počet záloh", 6, y, 4, [tgt(f'spz_backup_count{{{N}}}', instant=True)], desc="Uchováva sa 7 dní.")
+    stat("Počet záloh", 6, y, 4, [tgt(f'spz_backup_count{{{N}}}', instant=True)], desc="Mažú sa zálohy staršie ako 7 dní (zvyčajne ich je 8–9).")
     stat("Veľkosť DB", 10, y, 4, [tgt(f'spz_backup_size_bytes{{{N}}}', instant=True)], unit="bytes")
-    ts("Prihlásenia za deň (zo zálohy)", 14, y, 10, 6,
-       [tgt(f'clamp_min(delta(spz_logins_total{{{N}}}[1d]), 0)', "prihlásenia za 24 h", interval="1d")],
-       "short", bars=True, interval="1d", overrides=[ov("prihlásenia za 24 h", color="blue")])
+    stat("Aktívni za 7 dní", 14, y, 10, [tgt(f'spz_users_active_7d{{{N}}}', instant=True)],
+         desc="Prihlásili sa aspoň raz za posledných 7 dní (podľa nočnej zálohy).")
 
 dash = {"uid": "adtgcdz", "title": "SPZ – registrácia vozidiel", "tags": ["spz", "app"],
         "description": "Prevádzka spz.poetika.online. Návštevnosť: Umami.",

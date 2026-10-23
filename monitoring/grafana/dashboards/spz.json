@@ -852,6 +852,647 @@
      "sort": "desc"
     }
    }
+  },
+  {
+   "type": "row",
+   "id": 13,
+   "title": "Používatelia a záloha (z nočnej zálohy, len počty)",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 21,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "id": 14,
+   "title": "Používatelia",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 22,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(spz_users{job=\"node\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 15,
+   "title": "Admini",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 4,
+    "y": 22,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_users{job=\"node\",role=\"admin\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 16,
+   "title": "Vozidlá (ŠPZ)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 7,
+    "y": 22,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_vehicles{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 17,
+   "title": "S povolením vjazdu",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 10,
+    "y": 22,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_users_with_permission{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 18,
+   "title": "Aktívni za 30 dní",
+   "description": "Prihlásili sa aspoň raz za posledných 30 dní.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 14,
+    "y": 22,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_users_active_30d{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 19,
+   "title": "Nikdy neprihlásení",
+   "description": "Účty, ktoré vznikli (napr. importom), ale ešte sa neprihlásili.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 18,
+    "y": 22,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_users_never_logged_in{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "text",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 20,
+   "title": "Posledná záloha",
+   "description": "Záloha beží každú noc o 3:00. Viac ako 26 h = posledná nočná záloha neprebehla.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 26,
+    "w": 6,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "time() - spz_backup_last_timestamp_seconds{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "dtdurations",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 93600
+       },
+       {
+        "color": "red",
+        "value": 180000
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 21,
+   "title": "Počet záloh",
+   "description": "Mažú sa zálohy staršie ako 7 dní (zvyčajne ich je 8–9).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 6,
+    "y": 26,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_backup_count{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 22,
+   "title": "Veľkosť DB",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 10,
+    "y": 26,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_backup_size_bytes{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
+  },
+  {
+   "type": "stat",
+   "id": 23,
+   "title": "Aktívni za 7 dní",
+   "description": "Prihlásili sa aspoň raz za posledných 7 dní (podľa nočnej zálohy).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 14,
+    "y": 26,
+    "w": 10,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "spz_users_active_7d{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true
+   }
   }
  ],
  "templating": {

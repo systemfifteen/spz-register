@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Súhrnné štatistiky spz-register pre Prometheus (node_exporter textfile).
+Číta NAJNOVŠIU NOČNÚ ZÁLOHU (~fifteen/spz-backups), nie živú DB; exportuje iba počty – žiadne osobné údaje.
+Spúšťa spz-stats-textfile.timer (každú hodinu). Schválené Petrom 2026-10-23."""
+import glob, os, sqlite3, tempfile
+OUT = "/var/lib/prometheus/node-exporter/spz.prom"
+files = sorted(glob.glob("/home/fifteen/spz-backups/db_*.sqlite"))
+lines = ["# TYPE spz_backup_count gauge", f"spz_backup_count {len(files)}"]
+ok = 0
+if files:
+    f = files[-1]; st = os.stat(f)
+    lines += ["# TYPE spz_backup_last_timestamp_seconds gauge", f"spz_backup_last_timestamp_seconds {st.st_mtime:.0f}",
+              "# TYPE spz_backup_size_bytes gauge", f"spz_backup_size_bytes {st.st_size}"]
+    try:
+        c = sqlite3.connect(f"file:{f}?mode=ro", uri=True)
+        q = lambda s: c.execute(s).fetchone()[0] or 0
+        lines += ["# TYPE spz_users gauge",
+                  f'spz_users{{role="admin"}} {q("select count(*) from user where is_admin=1")}',
+                  f'spz_users{{role="user"}} {q("select count(*) from user where is_admin=0")}']
+        for k, sql in {
+            "spz_users_never_logged_in": "select count(*) from user where last_login is null or coalesce(login_count,0)=0",
+            "spz_users_active_30d": "select count(*) from user where last_login >= datetime('now','-30 days')",
+            "spz_users_active_7d": "select count(*) from user where last_login >= datetime('now','-7 days')",
+            "spz_users_with_permission": "select count(distinct user_id) from permission",
+            "spz_vehicles": "select count(*) from vehicle",
+            "spz_logins_total": "select sum(login_count) from user",
+        }.items():
+            lines += [f"# TYPE {k} gauge", f"{k} {q(sql)}"]
+        ok = 1
+    except Exception:
+        ok = 0
+lines += ["# TYPE spz_stats_ok gauge", f"spz_stats_ok {ok}"]
+fd, tmp = tempfile.mkstemp(dir=os.path.dirname(OUT), prefix=".spz.")
+with os.fdopen(fd, "w") as fh:
+    fh.write("\n".join(lines) + "\n")
+os.chmod(tmp, 0o644); os.replace(tmp, OUT)
