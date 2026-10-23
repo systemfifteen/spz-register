@@ -1,0 +1,2680 @@
+{
+ "uid": "kocka-hw",
+ "title": "Kocka – hardvér",
+ "tags": [
+  "kocka",
+  "hw",
+  "node-exporter"
+ ],
+ "description": "CPU, pamäť, disky, teploty a sieť servera kocka (node_exporter).",
+ "timezone": "browser",
+ "refresh": "30s",
+ "time": {
+  "from": "now-6h",
+  "to": "now"
+ },
+ "graphTooltip": 1,
+ "editable": true,
+ "schemaVersion": 41,
+ "panels": [
+  {
+   "type": "row",
+   "id": 1,
+   "title": "Prehľad",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 0,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "stat",
+   "id": 2,
+   "title": "Beží bez reštartu",
+   "description": "Čas od posledného štartu kocky.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 1,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "time() - node_boot_time_seconds{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "dtdurations",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 3,
+   "title": "CPU",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 3,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{job=\"node\",mode=\"idle\"}[$__rate_interval])))",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 70
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     },
+     "decimals": 1,
+     "min": 0,
+     "max": 100
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 4,
+   "title": "Pamäť RAM",
+   "description": "Skutočne používaná pamäť (bez cache, ktorú si systém vie kedykoľvek uvoľniť). Spolu 32 GB.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 7,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (1 - node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 80
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     },
+     "decimals": 1,
+     "min": 0,
+     "max": 100
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 5,
+   "title": "Disk /",
+   "description": "Zaplnenie hlavnej partície (LVM root, ~885 GB), rovnako ako df.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 11,
+    "y": 1,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (node_filesystem_size_bytes{job=\"node\",mountpoint=\"/\"} - node_filesystem_free_bytes{job=\"node\",mountpoint=\"/\"}) / (node_filesystem_size_bytes{job=\"node\",mountpoint=\"/\"} - node_filesystem_free_bytes{job=\"node\",mountpoint=\"/\"} + node_filesystem_avail_bytes{job=\"node\",mountpoint=\"/\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 80
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     },
+     "decimals": 1,
+     "min": 0,
+     "max": 100
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 6,
+   "title": "Záťaž (1 min)",
+   "description": "Load average. Kocka má 8 jadier – do 8 je to v poriadku.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 15,
+    "y": 1,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_load1{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 6
+       },
+       {
+        "color": "red",
+        "value": 8
+       }
+      ]
+     },
+     "decimals": 2
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 7,
+   "title": "Swap",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 18,
+    "y": 1,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (1 - node_memory_SwapFree_bytes{job=\"node\"} / node_memory_SwapTotal_bytes{job=\"node\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 30
+       },
+       {
+        "color": "red",
+        "value": 60
+       }
+      ]
+     },
+     "decimals": 1,
+     "min": 0,
+     "max": 100
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 8,
+   "title": "Zlyhané služby",
+   "description": "Počet systemd služieb v stave failed. Detail: systemctl --failed",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 21,
+    "y": 1,
+    "w": 3,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "count(node_systemd_unit_state{job=\"node\",state=\"failed\"} == 1) or vector(0)",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "red",
+        "value": 1
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 9,
+   "title": "Teplota CPU",
+   "description": "Intel Core 3 N355 – celý čip (Package). Throttling okolo 100 °C.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 75
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 10,
+   "title": "Teplota NVMe disku",
+   "description": "Fanxiang S500Pro 1TB – Composite teplota.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 4,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=\"nvme_nvme0\",sensor=\"temp1\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 60
+       },
+       {
+        "color": "red",
+        "value": 70
+       }
+      ]
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 11,
+   "title": "Teplota RAM",
+   "description": "Senzor na module DDR5 (SPD5118).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=~\"i2c_.*\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 65
+       },
+       {
+        "color": "red",
+        "value": 80
+       }
+      ]
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "area",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 12,
+   "title": "Zdravie disku (SMART)",
+   "description": "SMART self-assessment NVMe disku (smartctl, každých 15 min).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "min(smartmon_device_smart_healthy{job=\"node\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "red",
+        "value": null
+       },
+       {
+        "color": "green",
+        "value": 1
+       }
+      ]
+     },
+     "mappings": [
+      {
+       "type": "value",
+       "options": {
+        "1": {
+         "text": "OK",
+         "color": "green"
+        },
+        "0": {
+         "text": "PROBLÉM",
+         "color": "red"
+        }
+       }
+      }
+     ]
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 13,
+   "title": "Opotrebenie NVMe",
+   "description": "Koľko % zápisovej životnosti disku je spotrebovanej (výrobcom udávané). 100 % = koniec záruky životnosti.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "nvme_percentage_used_ratio{job=\"node\"}",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 0.5
+       },
+       {
+        "color": "red",
+        "value": 0.8
+       }
+      ]
+     },
+     "decimals": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "auto",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "stat",
+   "id": 14,
+   "title": "Aktualizácie",
+   "description": "Čakajúce apt aktualizácie (bezpečnostné sa inštalujú samé cez unattended-upgrades) a či systém potrebuje reštart.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 20,
+    "y": 5,
+    "w": 4,
+    "h": 4
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(apt_upgrades_pending{job=\"node\"}) or vector(0)",
+     "legendFormat": "Balíky",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    },
+    {
+     "refId": "B",
+     "expr": "max(node_reboot_required{job=\"node\"})",
+     "legendFormat": "Reštart",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Reštart"
+      },
+      "properties": [
+       {
+        "id": "mappings",
+        "value": [
+         {
+          "type": "value",
+          "options": {
+           "0": {
+            "text": "netreba",
+            "color": "green"
+           },
+           "1": {
+            "text": "treba",
+            "color": "orange"
+           }
+          }
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value_and_name",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "row",
+   "id": 15,
+   "title": "CPU a pamäť",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 9,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "id": 16,
+   "title": "Využitie CPU podľa typu",
+   "description": "Priemer cez všetkých 8 jadier, 100 % = všetky jadrá naplno.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 10,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (mode) (rate(node_cpu_seconds_total{job=\"node\",mode!=\"idle\"}[$__rate_interval])) / scalar(count(count by (cpu) (node_cpu_seconds_total{job=\"node\"}))) * 100",
+     "legendFormat": "{{mode}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "normal",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false,
+      "axisSoftMax": 100
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "min": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "user"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Aplikácie (user)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "system"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Systém (kernel)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "iowait"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Čakanie na disk"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "softirq"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Prerušenia (softirq)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "purple"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "irq"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Prerušenia (irq)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "dark-purple"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "nice"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Nízka priorita (nice)"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "steal"
+      },
+      "properties": [
+       {
+        "id": "displayName",
+        "value": "Steal"
+       },
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "yellow"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 17,
+   "title": "Pamäť",
+   "description": "Používaná + cache + voľná = 32 GB. Cache si Linux vezme na zrýchlenie disku a uvoľní ju, keď treba.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 10,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_memory_MemTotal_bytes{job=\"node\"} - node_memory_MemAvailable_bytes{job=\"node\"}",
+     "legendFormat": "Používaná",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "node_memory_MemAvailable_bytes{job=\"node\"} - node_memory_MemFree_bytes{job=\"node\"}",
+     "legendFormat": "Cache (uvoľniteľná)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "node_memory_MemFree_bytes{job=\"node\"}",
+     "legendFormat": "Voľná",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "D",
+     "expr": "node_memory_SwapTotal_bytes{job=\"node\"} - node_memory_SwapFree_bytes{job=\"node\"}",
+     "legendFormat": "Swap",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "normal",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "min": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Používaná"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Cache (uvoľniteľná)"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "yellow"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Voľná"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Swap"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       },
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "fill": "dash",
+         "dash": [
+          10,
+          10
+         ]
+        }
+       },
+       {
+        "id": "custom.fillOpacity",
+        "value": 0
+       },
+       {
+        "id": "custom.stacking",
+        "value": {
+         "mode": "none",
+         "group": "A"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 18,
+   "title": "Záťaž (load average)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 18,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_load1{job=\"node\"}",
+     "legendFormat": "1 min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "node_load5{job=\"node\"}",
+     "legendFormat": "5 min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "node_load15{job=\"node\"}",
+     "legendFormat": "15 min",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "D",
+     "expr": "count(count by (cpu) (node_cpu_seconds_total{job=\"node\"}))",
+     "legendFormat": "Počet jadier",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "min": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Počet jadier"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       },
+       {
+        "id": "custom.lineStyle",
+        "value": {
+         "fill": "dash",
+         "dash": [
+          10,
+          10
+         ]
+        }
+       },
+       {
+        "id": "custom.fillOpacity",
+        "value": 0
+       },
+       {
+        "id": "custom.stacking",
+        "value": {
+         "mode": "none",
+         "group": "A"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 19,
+   "title": "Teploty",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 18,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
+     "legendFormat": "CPU",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "max(node_hwmon_temp_celsius{job=\"node\",chip=\"platform_coretemp_0\",sensor!=\"temp1\"})",
+     "legendFormat": "CPU najteplejšie jadro",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=\"nvme_nvme0\",sensor=\"temp1\"}",
+     "legendFormat": "NVMe disk",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "D",
+     "expr": "node_hwmon_temp_celsius{job=\"node\",chip=~\"i2c_.*\"}",
+     "legendFormat": "RAM",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 0,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "CPU"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "CPU najteplejšie jadro"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "NVMe disk"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "RAM"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 20,
+   "title": "Čakanie na zdroje (PSI)",
+   "description": "Pressure Stall Information: koľko % času procesy čakali, lebo niečoho bolo málo. Trvalo nad ~10 % = kocka nestíha.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 18,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_pressure_cpu_waiting_seconds_total{job=\"node\"}[$__rate_interval]) * 100",
+     "legendFormat": "CPU",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(node_pressure_memory_waiting_seconds_total{job=\"node\"}[$__rate_interval]) * 100",
+     "legendFormat": "Pamäť",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "rate(node_pressure_io_waiting_seconds_total{job=\"node\"}[$__rate_interval]) * 100",
+     "legendFormat": "Disk",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 8,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "min": 0
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "CPU"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Pamäť"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "yellow"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Disk"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "red"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "id": 21,
+   "title": "Disk a partície",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 26,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "bargauge",
+   "id": 22,
+   "title": "Zaplnenie partícií",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "100 * (node_filesystem_size_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"} - node_filesystem_free_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"}) / (node_filesystem_size_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"} - node_filesystem_free_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"} + node_filesystem_avail_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"})",
+     "legendFormat": "{{mountpoint}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "decimals": 0,
+     "min": 0,
+     "max": 100,
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "green",
+        "value": null
+       },
+       {
+        "color": "orange",
+        "value": 80
+       },
+       {
+        "color": "red",
+        "value": 90
+       }
+      ]
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "displayMode": "gradient",
+    "orientation": "horizontal",
+    "showUnfilled": true,
+    "valueMode": "color",
+    "namePlacement": "top",
+    "sizing": "auto",
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    }
+   }
+  },
+  {
+   "type": "table",
+   "id": 23,
+   "title": "Partície",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "max by (mountpoint, device, fstype) (node_filesystem_size_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false,
+     "format": "table"
+    },
+    {
+     "refId": "B",
+     "expr": "max by (mountpoint, device, fstype) (node_filesystem_size_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"} - node_filesystem_free_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false,
+     "format": "table"
+    },
+    {
+     "refId": "C",
+     "expr": "max by (mountpoint, device, fstype) (node_filesystem_avail_bytes{job=\"node\",fstype=~\"ext4|vfat|xfs|btrfs\"})",
+     "legendFormat": "__auto",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false,
+     "format": "table"
+    }
+   ],
+   "transformations": [
+    {
+     "id": "merge",
+     "options": {}
+    },
+    {
+     "id": "organize",
+     "options": {
+      "excludeByName": {
+       "Time": true,
+       "instance": true,
+       "job": true,
+       "machine": true,
+       "device_error": true,
+       "__name__": true
+      },
+      "indexByName": {
+       "mountpoint": 0,
+       "device": 1,
+       "fstype": 2,
+       "Value #A": 3,
+       "Value #B": 4,
+       "Value #C": 5
+      },
+      "renameByName": {
+       "mountpoint": "Pripojenie",
+       "device": "Zariadenie",
+       "fstype": "Typ",
+       "Value #A": "Veľkosť",
+       "Value #B": "Použité",
+       "Value #C": "Voľné"
+      }
+     }
+    },
+    {
+     "id": "sortBy",
+     "options": {
+      "sort": [
+       {
+        "field": "Pripojenie"
+       }
+      ]
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "decimals": 1,
+     "custom": {
+      "align": "auto",
+      "cellOptions": {
+       "type": "auto"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "showHeader": true,
+    "cellHeight": "sm",
+    "footer": {
+     "show": false
+    }
+   }
+  },
+  {
+   "type": "stat",
+   "id": 24,
+   "title": "NVMe disk – životné údaje",
+   "description": "Fanxiang S500Pro 1TB. Nečisté vypnutia = výpadky prúdu/tvrdé vypnutia.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 27,
+    "w": 8,
+    "h": 7
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "nvme_data_units_written_total{job=\"node\"} * 512000",
+     "legendFormat": "Zapísané spolu",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    },
+    {
+     "refId": "B",
+     "expr": "nvme_data_units_read_total{job=\"node\"} * 512000",
+     "legendFormat": "Prečítané spolu",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    },
+    {
+     "refId": "C",
+     "expr": "nvme_power_on_hours_total{job=\"node\"}",
+     "legendFormat": "Hodín v prevádzke",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    },
+    {
+     "refId": "D",
+     "expr": "nvme_unsafe_shutdowns_total{job=\"node\"}",
+     "legendFormat": "Nečisté vypnutia",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    },
+    {
+     "refId": "E",
+     "expr": "nvme_media_errors_total{job=\"node\"}",
+     "legendFormat": "Chyby média",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     },
+     "instant": true,
+     "range": false
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "none",
+     "color": {
+      "mode": "thresholds"
+     },
+     "thresholds": {
+      "mode": "absolute",
+      "steps": [
+       {
+        "color": "blue",
+        "value": null
+       }
+      ]
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byRegexp",
+       "options": "Zapísané spolu|Prečítané spolu"
+      },
+      "properties": [
+       {
+        "id": "unit",
+        "value": "bytes"
+       },
+       {
+        "id": "decimals",
+        "value": 1
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Chyby média"
+      },
+      "properties": [
+       {
+        "id": "thresholds",
+        "value": {
+         "mode": "absolute",
+         "steps": [
+          {
+           "color": "green",
+           "value": null
+          },
+          {
+           "color": "red",
+           "value": 1
+          }
+         ]
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "reduceOptions": {
+     "calcs": [
+      "lastNotNull"
+     ],
+     "fields": "",
+     "values": false
+    },
+    "colorMode": "value",
+    "graphMode": "none",
+    "textMode": "value_and_name",
+    "justifyMode": "center",
+    "orientation": "auto",
+    "wideLayout": true,
+    "showPercentChange": false
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 25,
+   "title": "Disk – priepustnosť",
+   "description": "Hore čítanie, dole zápis.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 34,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_disk_read_bytes_total{job=\"node\",device=\"nvme0n1\"}[$__rate_interval])",
+     "legendFormat": "Čítanie",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(node_disk_written_bytes_total{job=\"node\",device=\"nvme0n1\"}[$__rate_interval])",
+     "legendFormat": "Zápis",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "Bps",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byRegexp",
+       "options": "Zápis"
+      },
+      "properties": [
+       {
+        "id": "custom.transform",
+        "value": "negative-Y"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Čítanie"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Zápis"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 26,
+   "title": "Disk – operácie (IOPS)",
+   "description": "",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 8,
+    "y": 34,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_disk_reads_completed_total{job=\"node\",device=\"nvme0n1\"}[$__rate_interval])",
+     "legendFormat": "Čítanie",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(node_disk_writes_completed_total{job=\"node\",device=\"nvme0n1\"}[$__rate_interval])",
+     "legendFormat": "Zápis",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "iops",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byRegexp",
+       "options": "Zápis"
+      },
+      "properties": [
+       {
+        "id": "custom.transform",
+        "value": "negative-Y"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Čítanie"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Zápis"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "orange"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 27,
+   "title": "Disk – vyťaženie",
+   "description": "Koľko % času disk niečo robil.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 16,
+    "y": 34,
+    "w": 8,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_disk_io_time_seconds_total{job=\"node\",device=\"nvme0n1\"}[$__rate_interval]) * 100",
+     "legendFormat": "Vyťaženie",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percent",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     },
+     "min": 0,
+     "max": 100
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Vyťaženie"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "purple"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "row",
+   "id": 28,
+   "title": "Sieť",
+   "collapsed": false,
+   "gridPos": {
+    "x": 0,
+    "y": 42,
+    "w": 24,
+    "h": 1
+   },
+   "panels": []
+  },
+  {
+   "type": "timeseries",
+   "id": 29,
+   "title": "Sieť – LAN (enp1s0)",
+   "description": "Hore prijaté, dole odoslané.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 0,
+    "y": 43,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_network_receive_bytes_total{job=\"node\",device=\"enp1s0\"}[$__rate_interval]) * 8",
+     "legendFormat": "Prijaté",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(node_network_transmit_bytes_total{job=\"node\",device=\"enp1s0\"}[$__rate_interval]) * 8",
+     "legendFormat": "Odoslané",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bps",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byRegexp",
+       "options": "Odoslané"
+      },
+      "properties": [
+       {
+        "id": "custom.transform",
+        "value": "negative-Y"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Prijaté"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Odoslané"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  },
+  {
+   "type": "timeseries",
+   "id": 30,
+   "title": "Sieť – WireGuard VPN (wg0)",
+   "description": "Hore prijaté, dole odoslané.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "eff0zxq6sk64gc"
+   },
+   "gridPos": {
+    "x": 12,
+    "y": 43,
+    "w": 12,
+    "h": 8
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(node_network_receive_bytes_total{job=\"node\",device=\"wg0\"}[$__rate_interval]) * 8",
+     "legendFormat": "Prijaté",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(node_network_transmit_bytes_total{job=\"node\",device=\"wg0\"}[$__rate_interval]) * 8",
+     "legendFormat": "Odoslané",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "eff0zxq6sk64gc"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bps",
+     "custom": {
+      "drawStyle": "line",
+      "lineWidth": 2,
+      "fillOpacity": 18,
+      "gradientMode": "opacity",
+      "showPoints": "never",
+      "spanNulls": true,
+      "lineInterpolation": "smooth",
+      "stacking": {
+       "mode": "none",
+       "group": "A"
+      },
+      "axisBorderShow": false,
+      "axisCenteredZero": false
+     },
+     "color": {
+      "mode": "palette-classic"
+     }
+    },
+    "overrides": [
+     {
+      "matcher": {
+       "id": "byRegexp",
+       "options": "Odoslané"
+      },
+      "properties": [
+       {
+        "id": "custom.transform",
+        "value": "negative-Y"
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Prijaté"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "blue"
+        }
+       }
+      ]
+     },
+     {
+      "matcher": {
+       "id": "byName",
+       "options": "Odoslané"
+      },
+      "properties": [
+       {
+        "id": "color",
+        "value": {
+         "mode": "fixed",
+         "fixedColor": "green"
+        }
+       }
+      ]
+     }
+    ]
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom",
+     "calcs": []
+    },
+    "tooltip": {
+     "mode": "multi",
+     "sort": "desc"
+    }
+   }
+  }
+ ],
+ "templating": {
+  "list": []
+ },
+ "annotations": {
+  "list": []
+ }
+}
