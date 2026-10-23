@@ -7,3 +7,9 @@ scrape_configs:
     static_configs:
       - targets: ['spz:8000']
     metrics_path: '/metrics'
+
+  - job_name: 'crowdsec'
+    static_configs:
+      - targets: ['crowdsec:6060']
+        labels:
+          machine: kocka

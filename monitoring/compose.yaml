@@ -21,7 +21,10 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
+      # geodáta o útokoch z CrowdSec exportéra (~/infra/crowdsec) – len na čítanie
+      - /home/fifteen/infra/crowdsec/geo-out:/geo:ro
     environment:
+      - GF_PLUGINS_PREINSTALL=frser-sqlite-datasource
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-changeme}
       - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN:-grafana.example.com}
       - GF_SERVER_DOMAIN=${GRAFANA_DOMAIN:-grafana.example.com}
@@ -46,6 +49,12 @@ configs:
           static_configs:
             - targets: ['spz:8000']
           metrics_path: '/metrics'
+
+        - job_name: 'crowdsec'
+          static_configs:
+            - targets: ['crowdsec:6060']
+              labels:
+                machine: kocka
 
 volumes:
   prometheus_data:
